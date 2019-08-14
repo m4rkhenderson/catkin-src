@@ -1,2 +1,0 @@
-# catkin-ws
-ROS workspace
