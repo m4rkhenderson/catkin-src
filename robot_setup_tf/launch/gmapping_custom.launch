@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 laser base_link 100"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="0 0 0 0 0 0 base_link odom 100"/>
+
+  <node pkg="urg_node" type="urg_node" name="urg_node"/>
+
+  <node pkg="rviz" type="rviz" name="rviz"/>
+
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
+    <param name="temporalUpdate" value="0.2"/>
+  </node>
+</launch>

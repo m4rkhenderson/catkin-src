@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="robot_setup_tf" name="tf_broadcaster1" type="tf_broadcaster" />
+  <node pkg="robot_setup_tf" name="tf_broadcaster2" type="tf_broadcaster_2" />
+</launch>

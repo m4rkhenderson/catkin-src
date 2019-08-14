@@ -1,0 +1,43 @@
+# basic.world
+# Authors: Mark Henderson
+
+include "diff_drive_circle_robot.inc"
+
+name "basic"
+
+window
+(
+  size [ 600.0 600.0 ]
+  scale 20.0
+  center [ 0.0 0.0 ]
+  rotate [ 0.0 0.0 ]
+
+  show_data 1
+)
+
+model
+(
+  size [ 20.0 20.0 2.0 ]
+  pose [ 0.0 0.0 0.0 0.0 ]
+  color "gray30"
+  bitmap "maps/basic_map.png"
+
+  boundary 1
+
+  gui_nose 1
+  gui_grid 1
+  gui_move 1
+  gui_outline 1
+  gripper_return 0
+  fiducial_return 0
+  ranger_return 1
+
+  obstacle_return 1
+)
+
+diff_drive_circle_robot
+(
+  name "r0"
+  pose [ 0.0 0.0 0.0 0.0 ]
+  alwayson 1
+)
