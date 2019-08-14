@@ -14,7 +14,7 @@
 
   <node pkg="robot_odometry" type="abot_odom" name="abot_odom"/>
 
-  <node pkg="serial_abot" type="serial" name="serial" output="screen"/>
+  <node pkg="serial_abot" type="serial" name="serial" output="screen" required="true"/>
   <node pkg="serial_abot" type="serial_commands" name="serial_commands"/>
 
   <!--node pkg="rplidar_ros"  type="rplidarNode" name="rplidarNode">

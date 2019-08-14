@@ -68,8 +68,8 @@ int main(int argc, char** argv){
     double dt = (current_time - last_time).toSec();
 
     // traveled distances for the left and right wheel
-    d_left = (0.477* (cur_left_dis - old_left_dis)/3584);
-    d_right = (0.477* (cur_right_dis - old_right_dis)/3200);
+    d_left = (0.477* (cur_left_dis - old_left_dis)/3545);
+    d_right = (0.477* (cur_right_dis - old_right_dis)/3584);
     ROS_INFO("d_left = %f, d_right = %f", d_left, d_right);
 
     old_left_dis = cur_left_dis;

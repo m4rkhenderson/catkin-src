@@ -14,6 +14,7 @@ int VL = 0;
 int VR = 0;
 int DR = 0;
 bool state = 0;
+int count = 0;
 
 void moveCallback(const geometry_msgs::Twist& cmd){
     v = cmd.linear.x;
@@ -61,21 +62,26 @@ int main (int argc, char** argv){
         std_msgs::String msg;
         switch(state){
             case 0:
-                msg.data = {114,(char)DR,(char)VL,(char)VR};
+                if(count < 10){
+                    msg.data = {114,(char)DR,(char)VL,(char)VR};
+                    count++;
+                }
+                else{
+                    msg.data = 101;
+                }
                 break;
             case 1:
                 msg.data = 101;
                 break;
         }
         state = !state;
-//        if(vth != vth_p || v != v_p){
-//            msg.data = {114,(char)DR,(char)VL,(char)VR};
-//        }
-//        else{
-//            msg.data = 101;
-//        }
-//        v_p = v;
-//        vth_p = vth;
+
+        if(vth != vth_p || v != v_p){
+            count = 0;
+        }
+
+        v_p = v;
+        vth_p = vth;
         write_pub.publish(msg);
         ros::spinOnce();
         r.sleep();
