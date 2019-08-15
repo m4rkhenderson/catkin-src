@@ -1,0 +1,33 @@
+<!-- -->
+<launch>
+	<!-- /camera/depth/points	-->
+	  <!-- self filter stereo points -->
+  	<node pkg="robot_self_filter" type="self_filter" respawn="true" name="stereo_self_filter" output="screen">
+     		<remap from="cloud_in" to="/camera/depth/points" />
+     		<remap from="cloud_out" to="/kinect/depth/points_filtered" />
+
+     		<param name="subsample_value" type="double" value=".02"/>
+	
+  	</node>
+	
+	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+
+		<param name="resolution" value="0.05" />
+
+		<param name="sensor_model/max_range" value="3.0"/>
+
+		<param name="latch" value="false"/>
+		
+		<!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
+		<param name="frame_id" type="string" value="base_footprint" />
+		
+		<!-- maximum range to integrate (speedup!) -->
+		<param name="sensor_model/max_range" value="5.0" />
+		
+		<!-- data source to integrate (PointCloud2) -->
+		<remap from="cloud_in" to="/kinect/depth/points_filtered" />
+
+		<param name="filter_ground" value="true"/>
+	
+	</node>
+</launch>

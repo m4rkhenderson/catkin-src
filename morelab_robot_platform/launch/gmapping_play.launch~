@@ -1,0 +1,4 @@
+<!-- -->
+<launch>
+	<node pkg="map_server" type="map_server" name="my_map_server" args="$ (find parallax_eddie_platform) /map/map.yaml" />
+</launch>

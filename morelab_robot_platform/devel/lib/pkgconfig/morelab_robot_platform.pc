@@ -1,0 +1,8 @@
+prefix=/home/tungxt/rosproject/src/morelab_robot_platform/devel
+
+Name: morelab_robot_platform
+Description: Description of morelab_robot_platform
+Version: 0.0.0
+Cflags: -I/home/tungxt/rosproject/src/morelab_robot_platform/devel/include
+Libs: -L/home/tungxt/rosproject/src/morelab_robot_platform/devel/lib 
+Requires: message_runtime sensor_msgs geometry_msgs roscpp rospy std_msgs tf

@@ -1,0 +1,2 @@
+set(morelab_robot_platform_MESSAGE_FILES "msg/ADC.msg;msg/BatteryLevel.msg;msg/Distances.msg;msg/DistanceWheel.msg;msg/KeyStroke.msg;msg/Ping.msg;msg/Speech.msg;msg/SpeedWheel.msg;msg/StopSlidingSignal.msg;msg/Velocity.msg;msg/Voltages.msg")
+set(morelab_robot_platform_SERVICE_FILES "srv/Accelerate.srv;srv/DriveWithDistance.srv;srv/DriveWithPower.srv;srv/DriveWithSpeed.srv;srv/GetDistance.srv;srv/GetHeading.srv;srv/GetSpeed.srv;srv/GetStatus.srv;srv/ResetEncoder.srv;srv/Rotate.srv;srv/StopAtDistance.srv")

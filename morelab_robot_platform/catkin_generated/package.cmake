@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "morelab_robot_platform")
+set(morelab_robot_platform_MAINTAINER "tungxt <tungxt@todo.todo>")
+set(morelab_robot_platform_DEPRECATED "")
+set(morelab_robot_platform_VERSION "0.0.0")
+set(morelab_robot_platform_BUILD_DEPENDS "message_generation" "sensor_msgs" "geometry_msgs" "roscpp" "rospy" "std_msgs" "tf")
+set(morelab_robot_platform_RUN_DEPENDS "message_runtime" "sensor_msgs" "geometry_msgs" "roscpp" "rospy" "std_msgs" "tf")
+set(morelab_robot_platform_BUILDTOOL_DEPENDS "catkin")

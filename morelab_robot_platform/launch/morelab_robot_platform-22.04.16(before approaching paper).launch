@@ -1,0 +1,28 @@
+<!--%Tag(FULL)%-->
+<launch>
+<!-- rotation_power =70 -->
+	<param name="serial_port" value="/dev/ttyUSB0" />
+	<param name="angular_scale" value="0.8" /> <!--1.0 -->
+	<param name="linear_scale" value="0.8" /> <!--1.0 -->
+	<param name="left_power" value="36.0" />
+	<param name="right_power" value="36.0" />
+	<param name="rotation_power" value="80.0" /> <!-- not use -->
+	<param name="acceleration_power" value="5" /> <!-- not use -->
+	<param name="deceleration_power" value="100" /> <!-- not use -->
+	<param name="min_power" value="19"/> <!--19, 17 avoiding, 15 approaching-->
+	<param name="left_speed" value="36" /> <!-- not use -->
+	<param name="right_speed" value="36" /> <!-- not use -->
+	<param name="rotation_speed" value="36" /> <!-- not use -->
+	<param name="acceleration_speed" value="40" /> <!-- 40 -->
+	
+	<!--  output="screen" -->
+	<node pkg="morelab_robot_platform" type="eddie" name="eddie"/>
+	<node pkg="morelab_robot_platform" type="eddie_ping" name="eddie_ping" />
+	<node pkg="morelab_robot_platform" type="eddie_adc" name="eddie_adc"  />
+	<node pkg="morelab_robot_platform" type="eddie_controller" name="eddie_controller" output="screen"/>
+	<node pkg="morelab_robot_platform" type="eddie_teleop" name="eddie_teleop" output="screen"/>
+	<node pkg="morelab_robot_platform" type="eddie_odom" name="eddie_odom"/>
+	
+	  
+</launch>
+<!--%EndTag(FULL)%-->

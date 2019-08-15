@@ -1,0 +1,53 @@
+<!--%Tag(FULL)%-->
+<launch>
+<!-- rotation_power =70 -->
+	<param name="serial_port" value="/dev/ttyUSB0" />
+	<param name="angular_scale" value="10.50" />
+	<param name="linear_scale" value="1.0" />
+	<param name="left_power" value="30.0" />
+	<param name="right_power" value="30.0" />
+	<param name="rotation_power" value="25.0" />
+	<param name="acceleration_power" value="5" />
+	<param name="deceleration_power" value="80" />
+	<param name="min_power" value="32"/>
+	<param name="left_speed" value="25" />
+	<param name="right_speed" value="25" />
+	<param name="rotation_speed" value="25" />
+	<param name="acceleration_speed" value="60" />
+	
+	<node pkg="parallax_eddie_platform" type="eddie" name="eddie"/>
+	<node pkg="parallax_eddie_platform" type="eddie_ping" name="eddie_ping"  />
+	<node pkg="parallax_eddie_platform" type="eddie_adc" name="eddie_adc"  />
+	<node pkg="parallax_eddie_platform" type="eddie_controller" name="eddie_controller" output="screen"/>
+	<node pkg="parallax_eddie_platform" type="eddie_teleop" name="eddie_teleop"/>
+	<node pkg="parallax_eddie_platform" type="eddie_odom_robot_pose_ekf" name="eddie_odom_robot_pose_ekf" />
+	
+	<!-- imu driver param (80ms)-->
+	<node pkg="phidgets_imu" type="phidgets_imu_node" name="phidgets_imu_node" >
+		<!--param name="period" value="100" /-->
+			
+	</node>
+	
+	<!-- imu filter -->
+  	<node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node" >
+		<!--param name="fixed_frame" value="base_footprint"/-->
+			
+	</node>
+	 
+   
+	  <!-- The odometry estimator -->
+	   <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf" output="screen">
+	    <param name="freq" value="10.0"/>
+	    <param name="sensor_timeout" value="1.0"/>
+	    <param name="publish_tf" value="true"/>
+	    <param name="odom_used" value="true"/>
+	    <param name="imu_used" value="true"/>
+	    <param name="vo_used" value="false"/>
+	    <param name="output_frame" value="odom_combined" />
+  
+	    <remap from="imu_data" to="filtered_imu/data"/>
+	  </node>
+          
+	  
+</launch>
+<!--%EndTag(FULL)%-->

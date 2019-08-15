@@ -1,0 +1,7 @@
+Eddie.spin
+MCP3208.spin
+Quadrature_Encoder.spin
+Eddie Motor Driver.spin
+ReadPulseWidths.spin
+FullDuplexSerial.spin
+>compiler=SPIN

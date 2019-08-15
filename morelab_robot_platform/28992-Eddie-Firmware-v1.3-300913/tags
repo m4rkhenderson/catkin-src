@@ -1,0 +1,235 @@
+!_TAG_FILE_FORMAT	1	/original ctags format/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ADC	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ADC           : "MCP3208.spin"$/
+average	/opt/parallax/spin/MCP3208.spin	/^PUB average(channel, n) : sample | c$/
+cog	/opt/parallax/spin/MCP3208.spin	/^long  cog$/
+count	/opt/parallax/spin/MCP3208.spin	/^long  count$/
+dacx	/opt/parallax/spin/MCP3208.spin	/^long  dacx, dacy$/
+dacy	/opt/parallax/spin/MCP3208.spin	/^long  dacx, dacy$/
+dlsb	/opt/parallax/spin/MCP3208.spin	/^dlsb                    long    1 << 9$/
+in	/opt/parallax/spin/MCP3208.spin	/^PUB in(channel) : sample$/
+ins	/opt/parallax/spin/MCP3208.spin	/^long  ins[4]$/
+mask12	/opt/parallax/spin/MCP3208.spin	/^mask12                  long    $FFF$/
+out	/opt/parallax/spin/MCP3208.spin	/^PUB out(x, y)$/
+start	/opt/parallax/spin/MCP3208.spin	/^PUB start(dpin, cpin, spin, mode) : okay$/
+start1	/opt/parallax/spin/MCP3208.spin	/^PUB start1(dpin, cpin, spin, mode, xpin) : okay$/
+start2	/opt/parallax/spin/MCP3208.spin	/^PUB start2(dpin, cpin, spin, mode, xpin, ypin) : okay$/
+startx	/opt/parallax/spin/MCP3208.spin	/^PRI startx(ptr, dacmode) : okay$/
+stop	/opt/parallax/spin/MCP3208.spin	/^PUB stop$/
+AMask	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^AMask                   long    $55555555$/
+BMask	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^BMask                   long    $AAAAAAAA$/
+Cog	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^byte          Cog$/
+Encoders	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Encoders      : "Quadrature_Encoder"$/
+MSB	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^MSB                     long    $80000000$/
+Pin	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^Pin                     long    0$/
+Pos	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^long          Pos$/
+ReadDelta	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^PUB ReadDelta(EncID): DeltaPos$/
+Start	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^PUB Start(StartPin, NumEnc, NumDelta, PosAddr): Pass$/
+Stop	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^PUB Stop$/
+TotDelta	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^byte          TotDelta$/
+TotEnc	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Quadrature_Encoder.spin	/^TotEnc                  long    0$/
+CLK_FREQ	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^CLK_FREQ = 80_000_000$/
+CTRA_Setting	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^CTRA_Setting  long      %00100 << 26 | MOTOR_L_PWM$/
+CTRB_Setting	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^CTRB_Setting  long      %00100 << 26 | MOTOR_R_PWM$/
+FORWARD	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^FORWARD       = %100$/
+FREQUENCY	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^FREQUENCY     = 10_000$/
+Half	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Half          long      MAX_ON_TIME / 2$/
+Halt	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Pub Halt$/
+Id	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^byte  Id$/
+Left	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Pub Left(Value)$/
+LeftPower	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^LeftPower     word      0$/
+MAX_ON_TIME	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MAX_ON_TIME   = CLK_FREQ / FREQUENCY - MIN_OFF_TIME$/
+MIN_OFF_TIME	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MIN_OFF_TIME  = CLK_FREQ * 6 / 1_000_000$/
+MOTOR_L_A	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MOTOR_L_A     = 21$/
+MOTOR_L_B	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MOTOR_L_B     = 19$/
+MOTOR_L_PWM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MOTOR_L_PWM   = 20$/
+MOTOR_R_A	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MOTOR_R_A     = 24$/
+MOTOR_R_B	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MOTOR_R_B     = 22$/
+MOTOR_R_PWM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MOTOR_R_PWM   = 23$/
+MaxOnTime	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^MaxOnTime     long      MAX_ON_TIME$/
+Motors	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Motors        : "Eddie Motor Driver"$/
+OutputMask	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^OutputMask    long      |< MOTOR_L_A | |< MOTOR_L_PWM | |< MOTOR_L_B | |< MOTOR_R_A | |< MOTOR_R_PWM | |< MOTOR_R_B$/
+Period	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Period        long      CLK_FREQ / FREQUENCY$/
+Quarter	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Quarter       long      MAX_ON_TIME / 4$/
+REVERSE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^REVERSE       = %001$/
+Right	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Pub Right(Value)$/
+RightPower	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^RightPower    word      0$/
+Start	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Pub Start$/
+Stop	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie Motor Driver.spin	/^Pub Stop$/
+Neg1	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/ReadPulseWidths.spin	/^Neg1          long      -1$/
+Ping	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Ping          : "ReadPulseWidths.spin"$/
+Start	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/ReadPulseWidths.spin	/^PUB Start(InputMask)$/
+Stop	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/ReadPulseWidths.spin	/^PUB Stop$/
+cog	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/ReadPulseWidths.spin	/^byte                cog$/
+Bin	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Bin(value, digits)$/
+Dec	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Dec(value) | i, x$/
+Hex	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Hex(value, digits)$/
+Rx	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Rx : rxByte$/
+RxCheck	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB RxCheck : rxByte$/
+RxFlush	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB RxFlush$/
+RxTime	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB RxTime(ms) : rxByte | t$/
+Start	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Start(rxPin, txPin, mode, baudrate) : okay$/
+Stop	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Stop$/
+Str	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Str(stringPtr)$/
+Term	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Term          : "FullDuplexSerial"$/
+Tx	/opt/parallax/spin/FullDuplexSerial.spin	/^PUB Tx(txByte)$/
+bit_ticks	/opt/parallax/spin/FullDuplexSerial.spin	/^long  bit_ticks$/
+buffer_ptr	/opt/parallax/spin/FullDuplexSerial.spin	/^long  buffer_ptr$/
+cog	/opt/parallax/spin/FullDuplexSerial.spin	/^long  cog$/
+rx_buffer	/opt/parallax/spin/FullDuplexSerial.spin	/^byte  rx_buffer[16]$/
+rx_head	/opt/parallax/spin/FullDuplexSerial.spin	/^long  rx_head$/
+rx_pin	/opt/parallax/spin/FullDuplexSerial.spin	/^long  rx_pin$/
+rx_tail	/opt/parallax/spin/FullDuplexSerial.spin	/^long  rx_tail$/
+rxtx_mode	/opt/parallax/spin/FullDuplexSerial.spin	/^long  rxtx_mode$/
+tx_buffer	/opt/parallax/spin/FullDuplexSerial.spin	/^byte  tx_buffer[16]$/
+tx_head	/opt/parallax/spin/FullDuplexSerial.spin	/^long  tx_head$/
+tx_pin	/opt/parallax/spin/FullDuplexSerial.spin	/^long  tx_pin$/
+tx_tail	/opt/parallax/spin/FullDuplexSerial.spin	/^long  tx_tail$/
+ACK	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ACK           = $06$/
+ADC_CLK	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ADC_CLK       = 27$/
+ADC_CS	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ADC_CS        = 25$/
+ADC_DIO	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ADC_DIO       = 26$/
+BAUDMODE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^BAUDMODE      = %0000$/
+BAUDRATE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^BAUDRATE      = 115_200$/
+BEL	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^BEL           = $07$/
+BS	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^BS            = $08$/
+BUFFER_LENGTH	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^BUFFER_LENGTH = 255$/
+BadChecksum	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^BadChecksum             byte " - Bad checksum", 0$/
+CAN	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^CAN           = $18$/
+CR	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^CR            = $0D$/
+CheckLastParameter	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri CheckLastParameter$/
+ChecksumParse	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri ChecksumParse | Index, Checksum, RemoteChecksum$/
+DC1	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DC1           = $11$/
+DC2	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DC2           = $12$/
+DC3	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DC3           = $13$/
+DC4	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DC4           = $14$/
+DEADZONE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DEADZONE      = 1$/
+DEL	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DEL           = $7F$/
+DEVICE_CODE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DEVICE_CODE   = %0110 << 4$/
+DIVISOR	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DIVISOR       = 50$/
+DLE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^DLE           = $10$/
+Decel	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Decel         long      0[2]$/
+EM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^EM            = $19$/
+ENCODERS_PIN	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ENCODERS_PIN  = 8$/
+ENQ	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ENQ           = $05$/
+EOT	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^EOT           = $04$/
+ESC	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ESC           = $1B$/
+ETB	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ETB           = $17$/
+ETX	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ETX           = $03$/
+EncoderError	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^EncoderError            byte " - Encoder error", 0$/
+Error	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^long Error$/
+FF	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^FF            = $0C$/
+FS	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^FS            = $1C$/
+GPIOMask	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^GPIOMask      long      INITIAL_GPIO$/
+GS	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^GS            = $1D$/
+GetAck	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri GetAck : ackbit$/
+GetByte	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri GetByte : value$/
+HALF_SEC	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^HALF_SEC      = DIVISOR / 2$/
+HT	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^HT            = $09$/
+I2C_ACK	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^I2C_ACK       = 0$/
+I2C_NACK	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^I2C_NACK      = 1$/
+I2cStart	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri I2cStart$/
+I2cStop	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri I2cStop$/
+INITIAL_GPIO	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^INITIAL_GPIO  = |< SSR_A | |< SSR_B | |< SSR_C$/
+INITIAL_PING	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^INITIAL_PING  = |< PING_0 | |< PING_1| |< PING_2$/
+InputBuffer	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^InputBuffer   byte      0[BUFFER_LENGTH]$/
+InputIndex	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^InputIndex    byte      0$/
+InterpolateMidVariables	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri InterpolateMidVariables | Difference$/
+InvalidCommand	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^InvalidCommand          byte " - Invalid command", 0$/
+InvalidParameter	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^InvalidParameter        byte " - Invalid parameter", 0$/
+KeepAlive	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^KeepAlive     byte      True$/
+Kp	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Kp            long      Motors#MAX_ON_TIME / 64$/
+LF	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^LF            = $0A$/
+MOTOR_L_A	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MOTOR_L_A     = 21$/
+MOTOR_L_B	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MOTOR_L_B     = 19$/
+MOTOR_L_PWM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MOTOR_L_PWM   = 20$/
+MOTOR_R_A	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MOTOR_R_A     = 24$/
+MOTOR_R_B	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MOTOR_R_B     = 22$/
+MOTOR_R_PWM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MOTOR_R_PWM   = 23$/
+Main	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pub Main | rxcheck, NextCNT, LoopCount$/
+MaxPosAccel	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MaxPosAccel   long      800$/
+MaxPowAccel	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MaxPowAccel   long      Motors#MAX_ON_TIME / 16$/
+MidPosAcc	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MidPosAcc     long      0[2]$/
+MidPosition	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MidPosition   long      0[2]$/
+MidVelAcc	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MidVelAcc     long      0[2]$/
+MidVelocity	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MidVelocity   long      0[2]$/
+Mode	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Mode          byte      0$/
+MotPosOffset	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MotPosOffset  long      0[2]$/
+MotorPosition	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MotorPosition long      0[2]$/
+MotorPower	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^MotorPower    long      0[2]$/
+MotorSpeed	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^long MotorSpeed[2]$/
+NAK	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^NAK           = $15$/
+NUL	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^NUL           = $00$/
+Nack	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Nack                    byte "ERROR", 0$/
+NextParameter	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri NextParameter$/
+NonCommand	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^NonCommand              byte " - Nothing happens", 0$/
+NullString	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^NullString              byte 0$/
+OUTPUTABLE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^OUTPUTABLE    = %00000000_00000111_00001111_11111111$/
+OutputBuffer	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^OutputBuffer  byte      0[BUFFER_LENGTH]$/
+OutputChr	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri OutputChr(Char)$/
+OutputDec	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri OutputDec(value) | i, x$/
+OutputHex	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri OutputHex(value, digits)$/
+OutputIndex	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^OutputIndex   byte      0$/
+OutputStr	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri OutputStr(Pointer)$/
+Overflow	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Overflow                byte " - Overflow", 0$/
+PAGE_SIZE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PAGE_SIZE     = 128$/
+PDIteration	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri PDIteration(Side) | MotorPositionSample, Difference, Limit$/
+PDLoop	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri PDLoop | NextCNT$/
+PDRunning	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PDRunning     byte      0$/
+PINGABLE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PINGABLE      = %00000000_00000000_00001111_11111111$/
+PING_0	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PING_0        = 0$/
+PING_1	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PING_1        = 1$/
+PING_2	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PING_2        = 2$/
+POSITIONS_PER_ROTATION	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^POSITIONS_PER_ROTATION = 744$/
+PROCESSRATE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PROCESSRATE   = _clkfreq / 16_000$/
+PROMPT_SUM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PROMPT_SUM    = $0$/
+Parse	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri Parse | Index, Parameter[3]$/
+ParseHex	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri ParseHex(Pointer) | Character$/
+ParseIndex	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^ParseIndex    byte      0$/
+PingMask	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PingMask      long      INITIAL_PING$/
+PingResults	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PingResults   long      INITIAL_PING, 0[31]$/
+PrevMotPoss	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PrevMotPoss   long      0[HALF_SEC * 2]$/
+ProcessPings	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri ProcessPings | PingPins, Index, Response$/
+Prompt	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Prompt                  byte CR, 0$/
+PrvMotPossIdx	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^PrvMotPossIdx byte      0$/
+RS	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^RS            = $1E$/
+RX	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^RX            = 31$/
+ReadEEPROM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri ReadEEPROM(startAddr, endAddr, eeStart) | addr$/
+ResetPingDriver	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri ResetPingDriver(NewMask)$/
+SAFEZONE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SAFEZONE      = 10$/
+SB	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SB            = $1A$/
+SCL	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SCL           = 28$/
+SDA	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SDA           = 29$/
+SI	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SI            = $0F$/
+SO	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SO            = $0E$/
+SOH	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SOH           = $01$/
+SSR_A	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SSR_A         = 16$/
+SSR_B	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SSR_B         = 17$/
+SSR_C	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SSR_C         = 18$/
+STX	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^STX           = $02$/
+SYN	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SYN           = $16$/
+SendAck	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri SendAck(ackbit)$/
+SendByte	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri SendByte(b) : ackbit | i$/
+SendChecksumResponse	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri SendChecksumResponse | Index, Checksum$/
+SendResponse	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri SendResponse$/
+SetAddr	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri SetAddr(addr) : ackbit$/
+SetPosition	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SetPosition   long      0[2]$/
+SetPower	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SetPower      long      0[2]$/
+SetVelocity	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^SetVelocity   long      0[2]$/
+Stack	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^long Stack[50]$/
+StillCnt	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^StillCnt      byte      0[2]$/
+TIMEOUT	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^TIMEOUT       = 10$/
+TX	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^TX            = 30$/
+TooFewParameters	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^TooFewParameters        byte " - Too few parameters", 0$/
+TooManyParameters	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^TooManyParameters       byte " - Too many parameters", 0$/
+US	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^US            = $1F$/
+VERSION	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^VERSION       = 13$/
+VT	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^VT            = $0B$/
+Verbose	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Verbose       byte      False$/
+WriteEEPROM	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^Pri WriteEEPROM(startAddr, endAddr, eeStart) | addr, page, eeAddr$/
+_CLKFREQ	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^_CLKFREQ = 80_000_000$/
+_CLKMODE	/home/tungxt/workingspace/parallax_eddie_platform/28992-Eddie-Firmware-v1.3-300913/Eddie.spin	/^_CLKMODE = XTAL1 + PLL16X$/
