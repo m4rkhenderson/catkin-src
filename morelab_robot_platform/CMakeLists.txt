@@ -151,7 +151,14 @@ target_link_libraries(eddie_odom ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(morelab_robot_platform_node morelab_robot_platform_generate_messages_cpp)
+#add_dependencies(morelab_robot_platform_node morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddie morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddie_adc morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddie_ping morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddie_teleop morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddie_controller morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddiebot_joy morelab_robot_platform_generate_messages_cpp)
+add_dependencies(eddie_odom morelab_robot_platform_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(morelab_robot_platform_node

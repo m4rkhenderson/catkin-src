@@ -28,8 +28,8 @@ void distanceWheelCallback(const morelab_robot_platform::DistanceWheel::ConstPtr
     //cur_left_dis = 0 - message->value[0];
     //cur_right_dis = 0 - message->value[1];
 
-    cur_left_dis = 0 - message->value[1];
-    cur_right_dis = 0 - message->value[0];
+    cur_left_dis = message->value[1];
+    cur_right_dis = message->value[0];
     ROS_INFO("Odom: left = %f, right = %f", cur_left_dis, cur_right_dis);
 
 }
@@ -69,9 +69,9 @@ int main(int argc, char** argv){
 
   tf::TransformBroadcaster odom_broadcaster;
   geometry_msgs::TransformStamped odom_trans;
-  odom_trans.header.frame_id = "odom";
+  odom_trans.header.frame_id = "world";
   //odom_trans.header.frame_id = "world";
-  odom_trans.child_frame_id = "base_footprint";
+  odom_trans.child_frame_id = "odom";
 
   //
   while(n.ok()){
@@ -81,8 +81,8 @@ int main(int argc, char** argv){
     double dt = (current_time - last_time).toSec();
 
     // traveled distances for the left and right wheel
-    d_left = (0.495* (cur_left_dis - old_left_dis)/144);
-    d_right = (0.495* (cur_right_dis - old_right_dis)/144);
+    d_left = (0.495* (cur_left_dis - old_left_dis)/2800);//used to be 144
+    d_right = (0.495* (cur_right_dis - old_right_dis)/2800);
     ROS_INFO("d_left = %f, d_right = %f", d_left, d_right);
 
     old_left_dis = cur_left_dis;
@@ -122,9 +122,9 @@ int main(int argc, char** argv){
     //next, we'll publish the odometry message over ROS
     nav_msgs::Odometry odom;
     odom.header.stamp = current_time;
-    odom.header.frame_id = "odom";
+    odom.header.frame_id = "world";
     //odom.header.frame_id = "world";
-    odom.child_frame_id = "base_footprint";
+    odom.child_frame_id = "odom";
 
     //set the position
     odom.pose.pose.position.x = x;

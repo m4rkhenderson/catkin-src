@@ -146,8 +146,8 @@ target_link_libraries(rangerx_odom ${catkin_LIBRARIES})
 add_executable(abot_odom src/abot_odometry.cpp)
 target_link_libraries(abot_odom ${catkin_LIBRARIES})
 
-add_executable(eddie_odom src/eddie_odom.cpp)
-target_link_libraries(eddie_odom ${catkin_LIBRARIES})
+#add_executable(eddie_odom src/eddie_odom.cpp)
+#target_link_libraries(eddie_odom ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

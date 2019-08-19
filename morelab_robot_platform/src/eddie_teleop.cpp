@@ -109,7 +109,7 @@ void EddieTeleop::keyLoop()
       case ' ':
         ROS_DEBUG("STOP");
         linear_ = 0.0;
-        linear_ = 0.0;
+        angular_ = 0.0;
         move = true;
         break;
     }

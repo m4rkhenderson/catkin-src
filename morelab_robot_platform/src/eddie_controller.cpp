@@ -226,13 +226,13 @@ bool EddieController::getStatus(morelab_robot_platform::GetStatus::Request& req,
 void EddieController::stop()
 {
   morelab_robot_platform::StopAtDistance dist;
-  dist.request.distance = 4; // stop after 4 encoder positions
+  dist.request.distance = 40; // stop after 4 encoder positions
 
   sem_wait(&mutex_interrupt_);
   interrupt_ = true;
   sem_post(&mutex_interrupt_);
 
-  for (int i = 0; !eddie_stop_.call(dist) && i < 5; i++)
+  for (int i = 0; !eddie_stop_.call(dist) && i < 41; i++)
       ROS_ERROR("ERROR: at trying to stop Eddie - stop() function");
 
   left_ = 0;

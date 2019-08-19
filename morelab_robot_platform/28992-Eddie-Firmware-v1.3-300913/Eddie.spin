@@ -8,7 +8,7 @@ Con
   VERSION       = 13
 
   ' Positions one wheel must make for a 360° rotation
-  POSITIONS_PER_ROTATION = 744
+  POSITIONS_PER_ROTATION = 14296'originally = 744 'calculation = 2*pi*distanceBetweenWheels, distanceBetweenWheels ~= 2276.47 positions
 
   ' Motor names
   #0
@@ -149,10 +149,10 @@ MidVelAcc     long      0[2]                            '  fractional part
 SetPosition   long      0[2]                            ' Position that MidPosition is approaching
 SetVelocity   long      0[2]                            ' Velocity that MidVelocity is approaching
 SetPower      long      0[2]                            ' Power level that MotorPower is approaching
-MaxPowAccel   long      Motors#MAX_ON_TIME / 16         ' Maximum allowed motor power acceleration
+MaxPowAccel   long      Motors#MAX_ON_TIME / 160         ' Maximum allowed motor power acceleration
 MaxPosAccel   long      800                             ' Maximum allowed positional acceleration
 Decel         long      0[2]                            ' Deceleration rate
-Kp            long      Motors#MAX_ON_TIME / 64         ' Proportional error feedback gain
+Kp            long      Motors#MAX_ON_TIME / 640         ' Proportional error feedback gain
 StillCnt      byte      0[2]                            ' Number of iterations in a row that the motor hasn't moved noticeably
 Mode          byte      0                               ' Current mode of the control system
 
