@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" value="true"/>
+  <node pkg="rviz" type="rviz" name="rviz"/>
+  <node pkg="morelab_robot_platform" type="eddie_odom" name="eddie_odom"/>
+  <node pkg="rosbag" type="play" name="player" args="--clock -r 1 /home/mark/eddieOdomData1.bag"/>
+</launch>

@@ -9,11 +9,12 @@
 	<remap from="scan" to="base_scan"/>
 	<node pkg="rviz" type="rviz" name="rviz"/>
 
-	<node	pkg="amcl" type="amcl" name="amcl">
+        <node	pkg="amcl" type="amcl" name="amcl">
 		<param name="use_map_topic" value="true"/>
 		<param name="base_frame_id" value="base_footprint"/>
-		<param name="tf_broadcast" value="false"/>
-	</node>
+                <param name="tf_broadcast" value="false"/>
+                <param name="odom_model_type" value="diff-corrected"/>
+        </node>
 
 	<!--node pkg="map_server" type="map_server" name="map_server" args="$(find stage_simulation)/worlds/maps/basic_map_scanned.yaml"/-->
 

@@ -28,8 +28,8 @@ void distanceWheelCallback(const morelab_robot_platform::DistanceWheel::ConstPtr
     //cur_left_dis = 0 - message->value[0];
     //cur_right_dis = 0 - message->value[1];
 
-    cur_left_dis = message->value[1];
-    cur_right_dis = message->value[0];
+    cur_left_dis = message->value[0];  // used to be 1
+    cur_right_dis = message->value[1]; // used to be 0
     ROS_INFO("Odom: left = %f, right = %f", cur_left_dis, cur_right_dis);
 
 }
@@ -81,8 +81,8 @@ int main(int argc, char** argv){
     double dt = (current_time - last_time).toSec();
 
     // traveled distances for the left and right wheel
-    d_left = (0.495* (cur_left_dis - old_left_dis)/2800);//used to be 144
-    d_right = (0.495* (cur_right_dis - old_right_dis)/2800);
+    d_left = (0.415* (cur_left_dis - old_left_dis)/2800);//used to be 144//0.495 0.477
+    d_right = (0.415* (cur_right_dis - old_right_dis)/2755);
     ROS_INFO("d_left = %f, d_right = %f", d_left, d_right);
 
     old_left_dis = cur_left_dis;

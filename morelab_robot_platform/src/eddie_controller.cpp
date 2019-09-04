@@ -109,7 +109,7 @@ EddieController::EddieController() :
   sem_post(&mutex_interrupt_);
 
   setAccelerationRate(acceleration_speed_);
-  max_power_ = 28;
+  max_power_ = 40;//28;
 }
 //
 void EddieController::encoderCallback(const morelab_robot_platform::DistanceWheel::ConstPtr &message)
@@ -232,7 +232,7 @@ void EddieController::stop()
   interrupt_ = true;
   sem_post(&mutex_interrupt_);
 
-  for (int i = 0; !eddie_stop_.call(dist) && i < 41; i++)
+  for (int i = 0; !eddie_stop_.call(dist) && i < 5; i++)
       ROS_ERROR("ERROR: at trying to stop Eddie - stop() function");
 
   left_ = 0;
@@ -262,7 +262,7 @@ void EddieController::moveLinearAngular(float linear, float angular)
             angular = -0.3;//
       }
       // turning
-      right_vel = 5*angular * width_robot / 2.0;
+      right_vel = 5*angular * width_robot / 2.0;// used to be 5*angular*width_robot/2.0;
       //if(right_vel>0.3) right_vel = 0.3; // only rotate with minimum velocity
       left_vel = (-1) * right_vel;
       ROS_INFO("Turning: angular = %f", angular);

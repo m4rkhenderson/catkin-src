@@ -113,7 +113,7 @@ Con
   DIVISOR       = 50            ' Iterations per second
   HALF_SEC      = DIVISOR / 2   ' Iterations per unit
   DEADZONE      = 1 '* FOUR
-  SAFEZONE      = 10
+  SAFEZONE      = 200 ' used to be 10
   PROMPT_SUM    = $0
 
            
@@ -149,10 +149,10 @@ MidVelAcc     long      0[2]                            '  fractional part
 SetPosition   long      0[2]                            ' Position that MidPosition is approaching
 SetVelocity   long      0[2]                            ' Velocity that MidVelocity is approaching
 SetPower      long      0[2]                            ' Power level that MotorPower is approaching
-MaxPowAccel   long      Motors#MAX_ON_TIME / 160         ' Maximum allowed motor power acceleration
+MaxPowAccel   long      Motors#MAX_ON_TIME / 16         ' Maximum allowed motor power acceleration 'originally 16
 MaxPosAccel   long      800                             ' Maximum allowed positional acceleration
 Decel         long      0[2]                            ' Deceleration rate
-Kp            long      Motors#MAX_ON_TIME / 640         ' Proportional error feedback gain
+Kp            long      Motors#MAX_ON_TIME / 16000      ' Proportional error feedback gain 'originally 64
 StillCnt      byte      0[2]                            ' Number of iterations in a row that the motor hasn't moved noticeably
 Mode          byte      0                               ' Current mode of the control system
 

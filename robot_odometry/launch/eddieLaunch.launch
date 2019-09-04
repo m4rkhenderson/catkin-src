@@ -12,21 +12,22 @@
     <param name="use_gui" value="True"/>
   </node-->
 
-  <param name="serial_port" value="/dev/ttyUSB2" />
+  <param name="serial_port" value="/dev/ttyUSB0" />
   <param name="angular_scale" value="0.4" /> <!-- max 0.5 -->
   <param name="linear_scale" value="0.43" /> <!-- max 0.5 -->
-  <param name="left_power" value="60.0" /> <!-- left power factor -->
-  <param name="right_power" value="60.0" /> <!-- right power factor -->
-  <param name="min_power" value="15"/> <!--19, 17 avoiding, 15 approaching-->
-  <param name="acceleration_speed" value="10" /> <!-- 80 -->
+  <param name="left_power" value="80.0" /> <!-- left power factor -->
+  <param name="right_power" value="80.0" /> <!-- right power factor -->
+  <param name="min_power" value="19"/> <!--19, 17 avoiding, 15 approaching-->
+  <param name="acceleration_speed" value="80" /> <!-- 80 -->
   <param name="acceleration_power" value="30" />
-  <param name="deceleration_power" value="100" />
+  <!--param name="deceleration_power" value="100" /-->
 
   <node pkg="morelab_robot_platform" type="eddie" name="eddie"/>
   <!--node pkg="morelab_robot_platform" type="eddie_ping" name="eddie_ping" />
   <node pkg="morelab_robot_platform" type="eddie_adc" name="eddie_adc"  /-->
-  <node pkg="morelab_robot_platform" type="eddie_controller" name="eddie_controller"/>
-  <node pkg="morelab_robot_platform" type="eddie_teleop" name="eddie_teleop" output="screen"/>
+  <node pkg="morelab_robot_platform" type="eddie_controller" name="eddie_controller" output="screen"/>
+  <!--node pkg="morelab_robot_platform" type="eddie_teleop" name="eddie_teleop"/-->
+  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard"/>
   <node pkg="morelab_robot_platform" type="eddie_odom" name="eddie_odom"/>
 
   <!--node pkg="rplidar_ros"  type="rplidarNode" name="rplidarNode">
