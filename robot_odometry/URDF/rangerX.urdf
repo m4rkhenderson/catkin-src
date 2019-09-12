@@ -22,7 +22,7 @@
   <joint name="base_to_laser" type="fixed">
     <parent link="base_footprint"/>
     <child link="laser"/>
-    <origin xyz="0 0 1.45" rpy="0 0 -1.57"/>
+    <origin xyz="-0.065 0 1.41" rpy="0 0 -1.57"/>
   </joint>
 
 </robot>
