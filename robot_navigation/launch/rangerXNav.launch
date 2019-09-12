@@ -42,10 +42,10 @@
     <param name="scan_mode"           type="string" value="Standard"/>
   </node>
 
-  <node	pkg="amcl" type="amcl" name="amcl">
+  <node pkg="amcl" type="amcl" name="amcl">
     <param name="use_map_topic" value="true"/>
     <param name="base_frame_id" value="base_footprint"/>
-    <param name="tf_broadcast" value="true"/>
+    <param name="tf_broadcast" value="false"/>
     <param name="odom_model_type" value="diff-corrected"/>
     <param name="odom_alpha1" value="0.2"/>
     <param name="odom_alpha2" value="0.2"/>
@@ -68,11 +68,14 @@
     <rosparam file="$(find robot_navigation)/launch/base_local_planner_params.yaml" command="load"/>
     <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
     <param name="recovery_behavior_enabled" value="false"/>
+    <param name="controller_frequency" value="10.0"/>
+    <param name="use_dijkstra" value="false"/>
+    <param name="visualize_potential" value="true"/>
   </node>
 
-  <node pkg="map_server" name="map_server" type="map_server" args="$(find robot_navigation)/maps/fsde-firstfloor.pgm 0.050000"/>
+  <!--node pkg="map_server" name="map_server" type="map_server" args="$(find robot_navigation)/maps/fsde-firstfloor.pgm 0.050000"/-->
 
-  <!--node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
     <param name="base_frame" value="base_footprint"/>
     <param name="map_frame" value="map"/>
     <param name="odom_frame" value="odom"/>
@@ -81,7 +84,7 @@
     <param name="xmax" value="50.0"/>
     <param name="ymax" value="50.0"/>
     <param name="temporalUpdate" value="1.0"/>
-  </node-->
+  </node>
 
   <node pkg="rviz" type="rviz" name="rviz"/>
 </launch>
