@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  nav_msgs
   message_generation
   serial
 )
@@ -75,6 +76,7 @@ generate_messages(
    DEPENDENCIES
    std_msgs
    geometry_msgs
+   nav_msgs
 )
 
 ################################################

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot name="abot">
+  <link name="base_footprint">
+    <visual>
+      <origin  xyz="0 0 0.135" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.5 0.5 0.27"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="laser">
+    <visual>
+      <origin  xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.025"/>
+      </geometry>
+    </visual>
+  </link>
+
+
+  <joint name="base_to_laser" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="laser"/>
+    <origin xyz="0.14 0 0.295" rpy="0 0 0"/>
+  </joint>
+
+</robot>

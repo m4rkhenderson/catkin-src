@@ -4,6 +4,7 @@ global_costmap:
   update_frequency: 10.0
   publish_frequency: 5.0
   resolution: 0.075 #map generated from slam has resolution of 0.05
+  track_unknown_space: true
   static_map: false
   always_send_full_costmap: true
 

@@ -30,7 +30,7 @@ int main(int argc, char** argv){
   ros::Subscriber left_distance_sub = n.subscribe("readL", 10, leftDistanceCallback);
   ros::Subscriber right_distance_sub = n.subscribe("readR", 10, rightDistanceCallback);
 
-  double base_width = 0.45; // distance between the center of two wheels
+  double base_width = 0.46; // distance between the center of two wheels
 
   double d_left = 0.0;
   double d_right = 0.0;
@@ -57,8 +57,8 @@ int main(int argc, char** argv){
 
   tf::TransformBroadcaster odom_broadcaster;
   geometry_msgs::TransformStamped odom_trans;
-  odom_trans.header.frame_id = "world";
-  odom_trans.child_frame_id = "odom";
+  odom_trans.header.frame_id = "odom";
+  odom_trans.child_frame_id = "base_footprint";
 
   //
   while(n.ok()){
@@ -68,8 +68,8 @@ int main(int argc, char** argv){
     double dt = (current_time - last_time).toSec();
 
     // traveled distances for the left and right wheel
-    d_left = (0.477* (cur_left_dis - old_left_dis)/3545);
-    d_right = (0.477* (cur_right_dis - old_right_dis)/3584);
+    d_left = (0.477* (cur_left_dis - old_left_dis)/3545);     // 3545
+    d_right = (0.477* (cur_right_dis - old_right_dis)/3584);  // 3584
     ROS_INFO("d_left = %f, d_right = %f", d_left, d_right);
 
     old_left_dis = cur_left_dis;
@@ -109,8 +109,8 @@ int main(int argc, char** argv){
     //next, we'll publish the odometry message over ROS
     nav_msgs::Odometry odom;
     odom.header.stamp = current_time;
-    odom.header.frame_id = "world";
-    odom.child_frame_id = "odom";
+    odom.header.frame_id = "odom";
+    odom.child_frame_id = "base_footprint";
 
     //set the position
     odom.pose.pose.position.x = x;
@@ -125,8 +125,8 @@ int main(int argc, char** argv){
                                                     0, 0, 0, 0, 0, 1e-3}};
 
     //set the velocity
-    odom.twist.twist.linear.x = vx;
-    odom.twist.twist.linear.y = vy;
+    odom.twist.twist.linear.x = v;
+    odom.twist.twist.linear.y = 0;
     odom.twist.twist.linear.z = 0;
 
     odom.twist.twist.angular.x = 0.0;
