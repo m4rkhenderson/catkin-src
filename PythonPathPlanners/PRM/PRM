@@ -1,0 +1,14 @@
+"""
+PRM Algorithm
+description: randomly samples a given configuration space,
+checks for all nearest neighbours in a given radius or k-nearest
+neighbours, from this a graph G(V,E) is generated
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import PRM.PRMClasses as pc
+
+obs = [pc.Obstacle([[0, 0], [10, 20], [30, 0]]), pc.Obstacle([[70, 70], [70, 50], [90, 50], [90, 70]])]
+
+
