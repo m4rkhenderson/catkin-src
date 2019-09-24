@@ -15,5 +15,5 @@ obstacle_layer:
   base_scan: {data_type: LaserScan, sensor_frame: laser, clearing: true, marking: true, topic: /base_scan, expected_update_rate: 20}
 
 inflation_layer:
-  inflation_radius: 2.0
-  cost_scaling_factor: 0.75
+  inflation_radius: 0.5
+  cost_scaling_factor: 3.75

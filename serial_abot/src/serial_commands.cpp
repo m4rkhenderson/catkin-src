@@ -17,18 +17,26 @@ double velth = 0.0;
 double errorL = 0.0;
 double errorL_p = 0.0;
 double derivativeL = 0.0;
-double KPL = 0.016; //0.016// 0.04
-double KDL = 0.00001; // 0.01
+double integralL = 0.0;
+double KPL[] = {0.016,0.016};   //0.016<-verified by ziegler-nichols// 0.04
+double KIL[] = {0.0001,0.0001};
+double KDL[] = {0.00576,0.00576}; //0.00576<-verified by ziegler-nichols//0.00001// 0.01
 double cL = 0.0;
 double cL_p = 0.0;
 
 double errorA = 0.0;
 double errorA_p = 0.0;
 double derivativeA = 0.0;
-double KPA = 0.004;
-double KDA = 0.03;
+double integralA = 0.0;
+double KPA[] = {0.006,0.006}; //0.006<-verified by ziegler-nichols// 0.017
+double KIA[] = {0.0001,0.0001};
+double KDA[] = {0.0015,0.0015};//0.0015<-verified by ziegler-nichols//0.03
 double cA = 0.0;
 double cA_p = 0.0;
+
+int MODE = 0;
+double cR = 0.0;
+const double minRatio = 0.3;
 
 double R = 0.0;
 int VL = 0;
@@ -59,15 +67,31 @@ int main (int argc, char** argv){
     while(ros::ok()){
         std_msgs::String msg;
 
+        if(vth < 0){
+          MODE = 0;
+        }
+        else if(vth >= 0){
+          MODE = 1;
+        }
+
         errorL = v - vel;
         derivativeL = errorL - errorL_p;
+        //integralL = integralL + errorL;
         errorL_p = errorL;
-        cL = cL + KPL*errorL + KDL*derivativeL;
+        cL = cL + KPL[MODE]*errorL + KDL[MODE]*derivativeL;// + KIL*integralL;
 
         errorA = vth - velth;
         derivativeA = errorA - errorA_p;
+        //integralA = integralA + errorA;
         errorA_p = errorA;
-        cA = cA + KPA*errorA + KDA*derivativeA;
+        cA = cA + KPA[MODE]*errorA + KDA[MODE]*derivativeA;// + KIA*integralA;
+
+//        if(cA != 0.0){
+//          cR = cL/cA;
+//          if(-minRatio < cR < minRatio){
+//            cA = cL/minRatio;
+//          }
+//        }
 
         //vdf = vth*0.45;
         //R = v/vdf;
@@ -97,7 +121,8 @@ int main (int argc, char** argv){
         else{
             DR = 0;
         }
-        ROS_INFO("DR = %d, VL = %d, VR = %d", DR, VL, VR);
+        //ROS_INFO("DR = %d, VL = %d, VR = %d", DR, VL, VR);
+        ROS_INFO("Linear Control = %f, Angular Control = %f", cL, cA);
 
         switch(state){
             case 0:

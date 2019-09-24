@@ -1,0 +1,291 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon May 20 23:03:33 2019
+
+@author: markh
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import random as rdm
+import sys
+
+np.set_printoptions(threshold=sys.maxsize)
+
+
+def OBS_GEN(OBS):
+    dXObs = []
+    dYObs = []
+    m = []
+    bObs = []
+    for i in range(len(OBS) - 1):
+        dXObs.insert(i, (OBS[i + 1][0] - OBS[i][0]))
+        dYObs.insert(i, (OBS[i + 1][1] - OBS[i][1]))
+        if (dXObs[i] != 0):
+            m.insert(i, (dYObs[i] / dXObs[i]))
+            bObs.insert(i, (OBS[i][1] - m[i] * OBS[i][0]))
+        else:
+            m.insert(i, "DNE")
+            bObs.insert(i, OBS[i][0])
+    properties = [m, bObs]
+    return properties
+
+
+def RAND_CONF():  # pick random configuration in workspace
+    qRand = [rdm.randint(0, 100), rdm.randint(0, 100)]
+    return qRand
+
+
+def NEAREST_VERTEX(qRand, qInit, qPrev, qGoal):  # find nearest vertex
+    qNear = qInit
+    dX = qRand[0] - qNear[0]
+    dY = qRand[1] - qNear[1]
+    dNear = np.sqrt(dX * dX + dY * dY)
+    for i in range(len(qPrev)):
+        dX = qRand[0] - qPrev[i][0]
+        dY = qRand[1] - qPrev[i][1]
+        dTest = np.sqrt(dX * dX + dY * dY)
+        if (dTest < dNear and qPrev[i] != qGoal):
+            qNear = qPrev[i]
+            dNear = dTest
+    return qNear
+
+
+def NEW_CONF(qNear, qRand, dq):  # pick new configuration
+    dX = qRand[0] - qNear[0]
+    dY = qRand[1] - qNear[1]
+    dNear = np.sqrt(dX * dX + dY * dY)
+    if dNear > dq:
+        ang = np.arctan2(dY, dX)
+        qNew = [qNear[0] + dq * np.cos(ang), qNear[1] + dq * np.sin(ang)]
+    else:
+        qNew = qRand
+    return qNew
+
+
+def FEASIBLE_CONF(qNear, qNew, OBS, mObs, bObs):
+    dX = qNew[0] - qNear[0]
+    dY = qNew[1] - qNear[1]
+    tol = 2
+
+    if (qNew[0] < qNear[0]):
+        x0 = qNew[0]
+        x1 = qNear[0]
+    else:
+        x0 = qNear[0]
+        x1 = qNew[0]
+
+    if (qNew[1] < qNear[1]):
+        y0 = qNew[1]
+        y1 = qNear[1]
+    else:
+        y0 = qNear[1]
+        y1 = qNew[1]
+
+    if (dX != 0):
+        m = dY / dX
+        b = qNew[1] - m * qNew[0]
+
+        for i in range(len(mObs)):
+            if (mObs[i] == "DNE"):
+                yI = m * bObs[i] + b  # in this special case b has been set to the x intercept value
+                if (OBS[i][1] < OBS[i + 1][1]):
+                    yObs0 = OBS[i][1]
+                    yObs1 = OBS[i + 1][1]
+                else:
+                    yObs0 = OBS[i + 1][1]
+                    yObs1 = OBS[i][1]
+                if (y0 - tol <= yI <= y1 + tol and yObs0 - tol <= yI <= yObs1 + tol):
+                    qFeas = [-1, -1]
+                    break
+            else:
+                if (m == mObs[i]):
+                    qFeas = qNew
+                else:
+                    xI = (bObs[i] - b) / (m - mObs[i])
+                    if (OBS[i][0] < OBS[i + 1][0]):
+                        xObs0 = OBS[i][0]
+                        xObs1 = OBS[i + 1][0]
+                    else:
+                        xObs0 = OBS[i + 1][0]
+                        xObs1 = OBS[i][0]
+                    if (x0 - tol <= xI <= x1 + tol and xObs0 - tol <= xI <= xObs1 + tol):
+                        qFeas = [-1, -1]
+                        break
+                    else:
+                        qFeas = qNew
+    else:
+        for i in range(len(mObs)):
+            if (OBS[i][1] < OBS[i + 1][1]):
+                yObs0 = OBS[i][1]
+                yObs1 = OBS[i + 1][1]
+            else:
+                yObs0 = OBS[i + 1][1]
+                yObs1 = OBS[i][1]
+            if (mObs[i] == "DNE"):
+                xI = bObs[i]
+                if (xI == qNew[0]):
+                    if (
+                            y0 - tol <= yObs0 <= y1 + tol or y0 - tol <= yObs1 <= y1 + tol or yObs0 - tol <= y0 <= yObs1 + tol or yObs0 - tol <= y1 <= yObs1 + tol):
+                        qFeas = [-1, -1]
+                        break
+            else:
+                yI = mObs[i] * qNew[0] + bObs[i]
+                if (y0 - tol <= yI <= y1 + tol and yObs0 - tol <= yI <= yObs1 + tol):
+                    qFeas = [-1, -1]
+                    break
+                else:
+                    qFeas = qNew
+    return qFeas
+
+
+def NEAR_GOAL(qNear, qGoal, dq):
+    dX = qFeas[0] - qGoal[0]
+    dY = qFeas[1] - qGoal[1]
+    dGoal = np.sqrt(dX * dX + dY * dY)
+    if (dGoal <= dq):
+        state = 1
+    else:
+        state = 0
+    return state
+
+
+def BFS(qGoal, qInit, G, qPrev):
+    S = [qGoal]  # initialize queue
+    vParent = []
+    while (S):
+        v = S.pop(0)
+        if v == qInit:
+            fPath = [[v[0]], [v[1]]]
+            nAdd = v
+            while (nAdd != qGoal):
+                pInd = [[i, j] for i, row in enumerate(vParent) for j, elem in enumerate(row) if elem == nAdd][0]
+                nAdd = vParent[pInd[0]][1]
+                fPath[0].extend([nAdd[0]])
+                fPath[1].extend([nAdd[1]])
+            return fPath
+        vLoc = qPrev.index(v)  # returns index of vertex
+        for i in range(sum(G[vLoc])):
+            aLoc = G[vLoc].index(1)  # returns index of adjacent vertex
+            w = qPrev[aLoc]
+            S.extend([w])
+            vParent.append([w, v])
+            G[vLoc][aLoc] = 0  # remove adjacency indicator from list
+            G[aLoc][vLoc] = 0  # marking it as discovered
+    return 0
+
+
+qInit = [90, 90]  # initial coordinates
+
+qGoal = [50, 40]  # goal coordinates
+
+OBS1 = [[10, 20], [40, 10], [60, 40], [40, 25], [25, 35], [10, 20]]  # obstacle definitions
+OBS2 = [[60, 60], [60, 45], [70, 70], [65, 70], [60, 60]]
+OBS3 = [[40, 80], [10, 80], [10, 50], [40, 50], [40, 80]]
+
+prop1 = OBS_GEN(OBS1)
+prop2 = OBS_GEN(OBS2)
+prop3 = OBS_GEN(OBS3)
+mObs1 = prop1[0]
+bObs1 = prop1[1]
+mObs2 = prop2[0]
+bObs2 = prop2[1]
+mObs3 = prop3[0]
+bObs3 = prop3[1]
+
+qPrev = []
+qPrev.extend([qInit])  # initialize vertex list
+
+G = []
+G.append([0])
+
+dq = 10  # growth limit
+
+plt.figure(figsize=(8, 8))
+plt.xlim(0, 100)
+plt.ylim(0, 100)
+plt.title("RRT")
+plt.ion()
+
+# plot obstacles
+XObs1 = [OBS1[0][0]]
+YObs1 = [OBS1[0][1]]
+for i in range(1, len(OBS1)):
+    XObs1.extend([OBS1[i][0]])
+    YObs1.extend([OBS1[i][1]])
+XObs2 = [OBS2[0][0]]
+YObs2 = [OBS2[0][1]]
+for i in range(1, len(OBS2)):
+    XObs2.extend([OBS2[i][0]])
+    YObs2.extend([OBS2[i][1]])
+XObs3 = [OBS3[0][0]]
+YObs3 = [OBS3[0][1]]
+for i in range(1, len(OBS3)):
+    XObs3.extend([OBS3[i][0]])
+    YObs3.extend([OBS3[i][1]])
+plt.plot(XObs1, YObs1, 'ro--')
+plt.plot(XObs2, YObs2, 'ro--')
+plt.plot(XObs3, YObs3, 'ro--')
+
+plt.plot(qInit[0], qInit[1], 'co', markersize=20)
+plt.plot(qGoal[0], qGoal[1], 'mo', markersize=20)
+
+ax = plt.gca()
+ax.set_facecolor((0.1, 0.1, 0.1))
+
+DR = 0
+
+for k in range(500):
+    qRand = RAND_CONF()
+    qNear = NEAREST_VERTEX(qRand, qInit, qPrev, qGoal)
+    qNew = NEW_CONF(qNear, qRand, dq)
+    qFeas = FEASIBLE_CONF(qNear, qNew, OBS1, mObs1, bObs1)
+    if (qFeas != [-1, -1]):
+        qFeas = FEASIBLE_CONF(qNear, qNew, OBS2, mObs2, bObs2)
+        if (qFeas != [-1, -1]):
+            qFeas = FEASIBLE_CONF(qNear, qNew, OBS3, mObs3, bObs3)
+            if (qFeas != [-1, -1]):
+                qPrev.extend([qFeas])  # add new vertex to graph
+                vFeas = []
+                for i in range(len(G)):
+                    if i == qPrev.index(qNear):
+                        vFeas.extend([1])
+                    else:
+                        vFeas.extend([0])
+                G.append(vFeas)
+                for i in range(len(G)):
+                    if i == qPrev.index(qNear):
+                        G[i].extend([1])
+                    else:
+                        G[i].extend([0])
+                plt.plot([qFeas[0], qNear[0]], [qFeas[1], qNear[1]], 'bo-')
+                if (NEAR_GOAL(qNear, qGoal, dq) == 1):
+                    if (DR == 0):
+                        qPrev.extend([qGoal])  # add goal vertex to graph
+                        vFeas = []
+                        for i in range(len(G)):
+                            if i == qPrev.index(qFeas):
+                                vFeas.extend([1])
+                            else:
+                                vFeas.extend([0])
+                        G.append(vFeas)
+                        for i in range(len(G)):
+                            if i == qPrev.index(qFeas):
+                                G[i].extend([1])
+                            else:
+                                G[i].extend([0])
+                        DR = 1
+                    else:
+                        G[qPrev.index(qGoal)][qPrev.index(qFeas)] = 1  # mark qFeas as a
+                        G[qPrev.index(qFeas)][qPrev.index(qGoal)] = 1  # neighbour of qGoal
+                plt.draw()
+                plt.pause(0.00001)
+
+fPath = BFS(qGoal, qInit, G, qPrev)
+if (fPath != 0):
+    plt.plot(fPath[0], fPath[1], 'y*-', linewidth=2, markersize=10)
+    print(G)
+else:
+    print("Couldn't Find Path, Insufficient Iterations or Goal Non-Existant")
+plt.ioff()
+plt.show()
