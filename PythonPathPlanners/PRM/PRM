@@ -21,8 +21,8 @@ tree = []
 
 rRadius = 10
 gRadius = 5
-qInit = [50, 50]
-qGoal = [30, 30]
+qInit = [70, 70]
+qGoal = [20, 20]
 
 obs = pc.Obstacle([[0, 0], [20, 0], [40, 0], [60, 0], [80, 0], [100, 0], [100, 20], [100, 40], [100, 60], [100, 80],
                    [100, 100], [80, 100], [60, 100], [40, 100], [20, 100], [0, 100], [0, 80], [0, 60], [0, 40],
@@ -51,6 +51,7 @@ while goalFound < 1:
 
     if ct.checkCollision(qRand, obs, rRadius) > 0:
         print("INVALID QRAND")
+        collision = collision + 1
         continue
     else:
         print("VALID QRAND")
@@ -61,6 +62,7 @@ while goalFound < 1:
 
     if ct.checkCollision(qNew, obs, rRadius) > 0:
         print("INVALID QNEW")
+        collision = collision + 1
         continue
     else:
         print("VALID QNEW")

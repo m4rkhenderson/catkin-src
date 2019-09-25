@@ -3,7 +3,7 @@ from numpy import linalg as la
 
 
 def nearVertices(q, tree):
-    dist = 10
+    dist = 11
     v = []
 
     for i in range(len(tree)):
