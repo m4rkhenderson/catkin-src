@@ -24,6 +24,8 @@ gRadius = 2.5
 minDist = 3
 qInit = [70, 70]
 qGoal = [30, 30]
+xmax = 100
+ymax = 100
 
 obs = pc.Obstacle([[0, 0], [20, 0], [40, 0], [60, 0], [80, 0], [100, 0], [100, 20], [100, 40], [100, 60], [100, 80],
                    [100, 100], [80, 100], [60, 100], [40, 100], [20, 100], [0, 100], [0, 80], [0, 60], [0, 40],
@@ -48,7 +50,7 @@ tree.append(pc.Vertex(cntId, qInit, []))
 plt.ion()
 
 while goalFound < 1:
-    qRand = pc.Vertex([], sm.sampling(), [])
+    qRand = pc.Vertex([], sm.sampling(xmax, ymax), [])
 
     if ct.checkCollision(qRand, obs, rRadius) > 0:
         print("INVALID QRAND")
