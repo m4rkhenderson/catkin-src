@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 PRM Algorithm
 description: randomly samples a given configuration space,
