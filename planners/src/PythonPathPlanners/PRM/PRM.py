@@ -5,13 +5,13 @@ checks for all nearest neighbours in a given radius or k-nearest
 neighbours, from this a graph G(V,E) is generated
 """
 
-import PRM.CollisionTest as ct
-import PRM.ExtractPath as ep
-import PRM.NearVertices as nv
-import PRM.NearestNeighbour as nn
-import PRM.PRMClasses as pc
-import PRM.Sampling as sm
-import PRM.Steering as st
+import CollisionTest as ct
+import ExtractPath as ep
+import NearVertices as nv
+import NearestNeighbour as nn
+import PRMClasses as pc
+import Sampling as sm
+import Steering as st
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import linalg as la
@@ -20,7 +20,7 @@ tree = []
 
 rRadius = 5
 gRadius = 2.5
-minDist = 4
+minDist = 3
 qInit = [70, 70]
 qGoal = [30, 30]
 
@@ -90,7 +90,5 @@ while goalFound < 1:
     plt.draw()
     plt.pause(0.00001)
 
-
 plt.ioff()
 plt.show()
-

@@ -1,4 +1,4 @@
-import PRM.PRMClasses as pc
+import PRMClasses as pc
 import numpy as np
 from numpy import linalg as la
 
@@ -18,4 +18,3 @@ def steering(q, qNear, cntId, distance):
     else:
         qNew = pc.Vertex(cntId + 1, q.pose, [])
     return qNew
-

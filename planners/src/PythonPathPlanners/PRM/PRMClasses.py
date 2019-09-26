@@ -9,4 +9,3 @@ class Obstacle:
     def __init__(self, points, radius):
         self.points = points
         self.radius = radius
-
