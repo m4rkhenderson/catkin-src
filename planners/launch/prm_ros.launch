@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="rviz" type="rviz" name="rviz"/>
+    <node pkg="map_server" name="map_server" type="map_server" args="$(find robot_navigation)/maps/fsde-firstfloor-03.pgm 0.050000"/>
+    <node pkg="planners" type="prmNode.py" name="prmNode"/>
+</launch>
