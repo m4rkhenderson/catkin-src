@@ -1,6 +1,6 @@
 import random as rdm
 
 
-def sampling(xmax, ymax):
-    qRand = [rdm.randint(0, xmax), rdm.randint(0, ymax)]
+def sampling(xmax, ymax, xmin, ymin):
+    qRand = [rdm.randint(xmin, xmax), rdm.randint(ymin, ymax)]
     return qRand

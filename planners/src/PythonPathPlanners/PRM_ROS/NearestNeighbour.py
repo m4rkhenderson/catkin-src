@@ -3,7 +3,7 @@ from numpy import linalg as la
 
 
 def nearestNeighbour(q, tree):
-    minD = 200
+    minD = 10000000000
     minV = 0
 
     for i in range(len(tree)):
@@ -11,5 +11,5 @@ def nearestNeighbour(q, tree):
         if d < minD:
             minV = i
             minD = d
-    v = tree[minV].pose
+    v = tree[minV]
     return v
