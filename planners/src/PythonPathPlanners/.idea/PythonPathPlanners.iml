@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/PRM" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/PRM_ROS" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/RRT" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/RRT_ROS" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv-2-7" />
     </content>
