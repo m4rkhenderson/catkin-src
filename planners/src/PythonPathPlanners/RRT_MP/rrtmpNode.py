@@ -3,9 +3,8 @@
 import CollisionTest as ct
 import ExtractPath as ep
 import NearestNeighbour as nn
-import NearVertices as nv
 import Sampling as sp
-import Steering as st
+import MotionPrimitiveGeneration as mpg
 import RRTClasses as rc
 import rospy
 from nav_msgs.msg import OccupancyGrid
@@ -42,7 +41,7 @@ tree = []
 cntId = 0
 step_size = 10
 angle_threshold = 0.785
-
+mpArray = []
 
 def map_callback(data):
     global obs
@@ -53,11 +52,13 @@ def map_callback(data):
     global minX
     global maxY
     global minY
+    global mpArray
 
     map_resolution = data.info.resolution
     map_width = data.info.width
     map_height = data.info.height
     global_map = data.data
+    mpArray = [[0.5/map_resolution, -0.2], [0.5/map_resolution, 0], [0.5/map_resolution, 0.2]]
 
     maxX = 0
     minX = map_width
@@ -88,7 +89,7 @@ def goal_callback(data):
     global goal_set
     goal_set = True
     qGoal = [data.pose.position.x/map_resolution, data.pose.position.y/map_resolution,
-             data.pose.orientation.z]
+             2*np.arcsin(data.pose.orientation.z)]
     rospy.loginfo("Goal Pose: (%d,%d, %f)", qGoal[0], qGoal[1], qGoal[2])
 
 
@@ -97,7 +98,7 @@ def init_callback(data):
     global init_set
     init_set = True
     qInit = [data.pose.pose.position.x/map_resolution, data.pose.pose.position.y/map_resolution,
-             data.pose.pose.orientation.z]
+             2*np.arcsin(data.pose.pose.orientation.z)]
     rospy.loginfo("Initial Pose: (%d,%d, %f)", qInit[0], qInit[1], qInit[2])
 
 
@@ -121,8 +122,9 @@ def rrt_ros():
     global tree
     global cntId
     global step_size
+    global mpArray
     ########################################
-    rospy.init_node('prm_ros', anonymous=True)
+    rospy.init_node('rrt_ros', anonymous=True)
     rate = rospy.Rate(30)
     path_pub = rospy.Publisher('global_path', Path, queue_size=100)
     tree_pub = rospy.Publisher('tree', PoseArray, queue_size=100)
@@ -140,60 +142,57 @@ def rrt_ros():
             tree = []
             cntId = 0
             goalFound = -1
-            tree.append(rc.Vertex(cntId, qInit, []))
+            tree.append(rc.Vertex(cntId, qInit, [], [0, 0]))
             qGoal_p = qGoal
             qInit_p = qInit
             points.poses = []
 
         if goalFound < 0 and goal_set is True and init_set is True:
 
-            qRand = rc.Vertex([], sp.sampling(maxX, maxY, minX, minY), [])
+            qRand = rc.Vertex([], sp.sampling(maxX, maxY, minX, minY), [], [])
             if ct.checkCollision(qRand, obs, rRadius) > 0:
-                rospy.loginfo("Invalid Random Configuration")
                 continue
 
             qNear = nn.nearestNeighbour(qRand, tree)
 
-            qNew = st.steering(qRand, qNear, cntId, step_size, angle_threshold)
+            branch = mpg.generateMP(qNear, cntId, 3, 0.25, mpArray, obs, rRadius)
 
-            if ct.checkCollision(qNew, obs, rRadius) > 0:
-                rospy.loginfo("Invalid New Configuration")
+            if len(branch) > 0:
+                cntId = branch[-1].id
+            else:
                 continue
 
-            cntId = cntId + 1
-            qNew.id = cntId
+            tree.extend(branch)
 
-            qNew.pid = [qNear.id]
-
-            tree.append(qNew)
-            rospy.loginfo("Added New Connections to tree %d: (%d, %d, %f)",
-                          cntId, qNew.pose[0], qNew.pose[1], qNew.pose[2])
-
-            point = Pose()
-            point.position = Point(qNew.pose[0]*map_resolution, qNew.pose[1]*map_resolution, 0)
-            quat = [0, 0, np.sin(qNew.pose[2]/2), np.cos(qNew.pose[2]/2)]
-            point.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
-            points.poses.append(point)
+            for i in range(len(branch)):
+                point = Pose()
+                point.position = Point(branch[i].pose[0]*map_resolution, branch[i].pose[1]*map_resolution, 0)
+                quat = [0, 0, np.sin(branch[i].pose[2]/2), np.cos(branch[i].pose[2]/2)]
+                point.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
+                points.poses.append(point)
             tree_pub.publish(points)
 
-            if la.norm(np.subtract(qNew.pose[0:2], qGoal[0:2])) < gTolerance:
-                goalFound = 1
-                goal_set = False
-                p = ep.extractPath(qNew, tree, qInit)
-                if p == 0:
-                    rospy.loginfo("Couldn't Find Path, Error in Graph Search")
-                else:
-                    rospy.loginfo("Found Path!")
-                    path = Path()
-                    for i in range(len(p[0])):
-                        pose = PoseStamped()
-                        pose.pose.position = Point(p[0][i]*map_resolution, p[1][i]*map_resolution, 0)
-                        quat = [0, 0, np.sin(p[2][i]/2), np.cos(p[2][i]/2)]
-                        pose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
-                        path.header.frame_id = "global_path"
-                        path.poses.append(pose)
-                        rospy.loginfo("Path Point %d: (%d, %d, %f)", i, p[0][i], p[1][i], p[2][i])
-                    path_pub.publish(path)  # then publish
+            for i in range(len(branch)):
+                if la.norm(np.subtract(branch[i].pose[0:2], qGoal[0:2])) < gTolerance:
+                    goalFound = 1
+                    goal_set = False
+                    p = ep.extractPath(branch[i], tree, qInit)
+                    if p == 0:
+                        rospy.loginfo("Couldn't Find Path, Error in Graph Search")
+                        break
+                    else:
+                        rospy.loginfo("Found Path!")
+                        path = Path()
+                        for i in range(len(p[0])):
+                            pose = PoseStamped()
+                            pose.pose.position = Point(p[0][i]*map_resolution, p[1][i]*map_resolution, 0)
+                            quat = [0, 0, np.sin(p[2][i]/2), np.cos(p[2][i]/2)]
+                            pose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
+                            path.header.frame_id = "global_path"
+                            path.poses.append(pose)
+                            rospy.loginfo("Path Point %d: (%d, %d, %f)", i, p[0][i], p[1][i], p[2][i])
+                        path_pub.publish(path)  # then publish
+                        break
 
 
 if __name__ == '__main__':
