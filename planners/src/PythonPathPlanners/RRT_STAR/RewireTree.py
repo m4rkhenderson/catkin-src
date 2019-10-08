@@ -10,19 +10,21 @@ def rewire(q, tree, volume, step_size):
     r = min((gamma*pow((np.log(card)/card), 1/2)), step_size)
 
     v = nv.nearVertices(q, tree, r)
+    if q.pid[0] not in v:
+        v.append(q.pid[0])
 
     for i in range(len(v)):
         v_cost = tree[v[i]].cost + la.norm(np.subtract(q.pose[0:2], tree[v[i]].pose[0:2]))
         if v_cost <= c_min:
             v_nearest = v[i]
-            c_min = v_cost
-
-            q.cost = c_min
             q.pid = [v_nearest]
+            c_min = v_cost
+            q.cost = c_min
 
     for i in range(len(v)):
         v_cost = q.cost + la.norm(np.subtract(q.pose[0:2], tree[v[i]].pose[0:2]))
         if v_cost < tree[v[i]].cost:
+            tree[v[i]].cost = v_cost
             tree[v[i]].pid = [q.id]
 
     tree.append(q)

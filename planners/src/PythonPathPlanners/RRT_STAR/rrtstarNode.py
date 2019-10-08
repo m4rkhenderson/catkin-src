@@ -89,8 +89,8 @@ def goal_callback(data):
     global goal_set
     goal_set = True
     qGoal = [data.pose.position.x/map_resolution, data.pose.position.y/map_resolution,
-             data.pose.orientation.z]
-    rospy.loginfo("Goal Pose: (%d,%d, %f)", qGoal[0], qGoal[1], qGoal[2])
+             2*(np.arcsin(data.pose.orientation.z))]
+    rospy.loginfo("Goal Pose: (%d, %d, %f)", qGoal[0], qGoal[1], qGoal[2])
 
 
 def init_callback(data):
@@ -98,8 +98,8 @@ def init_callback(data):
     global init_set
     init_set = True
     qInit = [data.pose.pose.position.x/map_resolution, data.pose.pose.position.y/map_resolution,
-             data.pose.pose.orientation.z]
-    rospy.loginfo("Initial Pose: (%d,%d, %f)", qInit[0], qInit[1], qInit[2])
+             2*(np.arcsin(data.pose.pose.orientation.z))]
+    rospy.loginfo("Initial Pose: (%d, %d, %f)", qInit[0], qInit[1], qInit[2])
 
 
 def rrt_ros():
@@ -134,6 +134,11 @@ def rrt_ros():
     points = PoseArray()
     points.header.frame_id = "tree"
 
+    iterations = 0
+    dClose = 0
+    update_trig = -1
+    p_cost_prev = 1000000000
+
     while not rospy.is_shutdown():
         rate.sleep()
         # do path planning here
@@ -145,12 +150,16 @@ def rrt_ros():
             qGoal_p = qGoal
             qInit_p = qInit
             points.poses = []
+            dClose = la.norm(np.subtract(qInit[0:2], qGoal[0:2]))
+            p_cost_prev = 1000000000
+            update_trig = -1
+            iterations = 0
+            rate.sleep()
 
         if goalFound < 0 and goal_set is True and init_set is True:
 
             qRand = rc.Vertex([], sp.sampling(maxX, maxY, minX, minY), [], 0)
             if ct.checkCollision(qRand, obs, rRadius) > 0:
-                rospy.loginfo("Invalid Random Configuration")
                 continue
 
             qNear = nn.nearestNeighbour(qRand, tree)
@@ -158,18 +167,14 @@ def rrt_ros():
             qNew = st.steering(qRand, qNear, cntId, step_size, angle_threshold)
 
             if ct.checkCollision(qNew, obs, rRadius) > 0:
-                rospy.loginfo("Invalid New Configuration")
                 continue
 
             cntId = cntId + 1
             qNew.id = cntId
             qNew.pid = [qNear.id]
 
-            volume = (maxX - minX)*(maxY-minY)
+            volume = (maxX - minX)*(maxY - minY)
             tree = rt.rewire(qNew, tree, volume, step_size)
-
-            rospy.loginfo("Added New Connections to tree %d: (%d, %d, %f)",
-                          cntId, qNew.pose[0], qNew.pose[1], qNew.pose[2])
 
             point = Pose()
             point.position = Point(qNew.pose[0]*map_resolution, qNew.pose[1]*map_resolution, 0)
@@ -178,14 +183,25 @@ def rrt_ros():
             points.poses.append(point)
             tree_pub.publish(points)
 
-            if la.norm(np.subtract(qNew.pose[0:2], qGoal[0:2])) < gTolerance:
-                goalFound = 1
-                goal_set = False
-                p = ep.extractPath(tree[-1], tree, qInit)
+            if la.norm(np.subtract(qNew.pose[0:2], qGoal[0:2])) < gTolerance or update_trig > 0:
+
+                update_trig = 1
+
+                if iterations > 10000:
+                    goalFound = 1
+                    goal_set = False
+
+                if la.norm(np.subtract(qNew.pose[0:2], qGoal[0:2])) < dClose:
+                    qNearGoal = qNew
+                    dClose = la.norm(np.subtract(qNew.pose[0:2], qGoal[0:2]))
+
+                p = ep.extractPath(qNearGoal, tree, qInit)
+                p_cost = p[3][-1]
                 if p == 0:
                     rospy.loginfo("Couldn't Find Path, Error in Graph Search")
-                else:
-                    rospy.loginfo("Found Path!")
+                elif p_cost < p_cost_prev:
+                    rospy.loginfo("Found Better Path!")
+                    p_cost_prev = p_cost
                     path = Path()
                     for i in range(len(p[0])):
                         pose = PoseStamped()
@@ -194,8 +210,10 @@ def rrt_ros():
                         pose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
                         path.header.frame_id = "global_path"
                         path.poses.append(pose)
-                        rospy.loginfo("Path Point %d: (%d, %d, %f)", i, p[0][i], p[1][i], p[2][i])
+                        #  rospy.loginfo("Path Point %d: (%d, %d, %f)", i, p[0][i], p[1][i], p[2][i])
+                    rospy.loginfo("Current Path Cost: %f", p_cost)
                     path_pub.publish(path)  # then publish
+            iterations = iterations + 1
 
 
 if __name__ == '__main__':

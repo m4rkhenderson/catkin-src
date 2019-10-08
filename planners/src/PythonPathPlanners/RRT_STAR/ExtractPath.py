@@ -5,7 +5,7 @@ def extractPath(q, tree, qInit):
         v = Q.pop(0)
 
         if v.pose == qInit:
-            p = [[v.pose[0]], [v.pose[1]], [v.pose[2]]]
+            p = [[v.pose[0]], [v.pose[1]], [v.pose[2]], [v.cost]]
             vertex = [discovered[0][discovered[0].index(v)], discovered[1][discovered[0].index(v)]]
             while vertex[0].id != q.id:
                 v = tree[vertex[1]]
@@ -13,6 +13,7 @@ def extractPath(q, tree, qInit):
                 p[0].append(v.pose[0])
                 p[1].append(v.pose[1])
                 p[2].append(v.pose[2])
+                p[3].append(v.cost)
             return p
 
         for i in range(len(v.pid)):
