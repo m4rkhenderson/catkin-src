@@ -15,13 +15,15 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
-from tf.transformations import *
 import numpy as np
 from numpy import linalg as la
 
-rRadius = 5
-gTolerance = 10
-obs_inflation_radius = 1
+rRadius = rospy.get_param('/rrtmpNode/robot_radius', 5)
+gTolerance = rospy.get_param('/rrtmpNode/goal_tolerance', 10)
+obs_inflation_radius = rospy.get_param('/rrtmpNode/obstacle_inflation_radius', 1)
+step_size = rospy.get_param('/rrtmpNode/step_size', 10)
+angle_threshold = rospy.get_param('/rrtmpNode/angle_threshold', 0.785)
+mpArray = rospy.get_param('/rrtmpNode/motion_primitive_array', [[0.5, -0.2], [0.5, 0.0], [0.5, 0.2]])
 obs = rc.Obstacle([], obs_inflation_radius)
 maxX = 100
 minX = 0
@@ -39,9 +41,6 @@ init_set = False
 goalFound = -1
 tree = []
 cntId = 0
-step_size = 10
-angle_threshold = 0.785
-mpArray = []
 
 def map_callback(data):
     global obs
@@ -58,7 +57,9 @@ def map_callback(data):
     map_width = data.info.width
     map_height = data.info.height
     global_map = data.data
-    mpArray = [[0.5/map_resolution, -0.2], [0.5/map_resolution, 0], [0.5/map_resolution, 0.2]]
+
+    for i in range(len(mpArray)):
+        mpArray[i][0] = mpArray[i][0]/map_resolution
 
     maxX = 0
     minX = map_width
@@ -90,7 +91,7 @@ def goal_callback(data):
     goal_set = True
     qGoal = [data.pose.position.x/map_resolution, data.pose.position.y/map_resolution,
              2*np.arcsin(data.pose.orientation.z)]
-    rospy.loginfo("Goal Pose: (%d,%d, %f)", qGoal[0], qGoal[1], qGoal[2])
+    rospy.loginfo("Goal Pose: (%d, %d, %f)", qGoal[0], qGoal[1], qGoal[2])
 
 
 def init_callback(data):
@@ -99,10 +100,10 @@ def init_callback(data):
     init_set = True
     qInit = [data.pose.pose.position.x/map_resolution, data.pose.pose.position.y/map_resolution,
              2*np.arcsin(data.pose.pose.orientation.z)]
-    rospy.loginfo("Initial Pose: (%d,%d, %f)", qInit[0], qInit[1], qInit[2])
+    rospy.loginfo("Initial Pose: (%d, %d, %f)", qInit[0], qInit[1], qInit[2])
 
 
-def rrt_ros():
+def rrtmp_ros():
     # global variables necessary for planner
     global rRadius
     global obs
@@ -124,7 +125,7 @@ def rrt_ros():
     global step_size
     global mpArray
     ########################################
-    rospy.init_node('rrt_ros', anonymous=True)
+    rospy.init_node('rrtmp_ros', anonymous=True)
     rate = rospy.Rate(30)
     path_pub = rospy.Publisher('global_path', Path, queue_size=100)
     tree_pub = rospy.Publisher('tree', PoseArray, queue_size=100)
@@ -197,6 +198,6 @@ def rrt_ros():
 
 if __name__ == '__main__':
     try:
-        rrt_ros()
+        rrtmp_ros()
     except rospy.ROSInterruptException:
         pass

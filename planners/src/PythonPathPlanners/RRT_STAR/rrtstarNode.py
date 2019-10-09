@@ -174,7 +174,7 @@ def rrt_ros():
             qNew.pid = [qNear.id]
 
             volume = (maxX - minX)*(maxY - minY)
-            tree = rt.rewire(qNew, tree, volume, step_size)
+            tree = rt.rewire(qNew, tree, volume, step_size*2)
 
             point = Pose()
             point.position = Point(qNew.pose[0]*map_resolution, qNew.pose[1]*map_resolution, 0)
