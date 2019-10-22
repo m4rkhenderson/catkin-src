@@ -18,12 +18,12 @@ from geometry_msgs.msg import Quaternion
 import numpy as np
 from numpy import linalg as la
 
-rRadius = rospy.get_param('/rrtmpNode/robot_radius', 5)
-gTolerance = rospy.get_param('/rrtmpNode/goal_tolerance', 10)
-obs_inflation_radius = rospy.get_param('/rrtmpNode/obstacle_inflation_radius', 1)
-step_size = rospy.get_param('/rrtmpNode/step_size', 10)
-angle_threshold = rospy.get_param('/rrtmpNode/angle_threshold', 0.785)
-mpArray = rospy.get_param('/rrtmpNode/motion_primitive_array', [[0.5, -0.2], [0.5, 0.0], [0.5, 0.2]])
+rRadius = rospy.get_param('/rrtmpLocalNode/robot_radius', 5)
+gTolerance = rospy.get_param('/rrtmpLocalNode/goal_tolerance', 10)
+obs_inflation_radius = rospy.get_param('/rrtmpLocalNode/obstacle_inflation_radius', 1)
+step_size = rospy.get_param('/rrtmpLocalNode/step_size', 10)
+angle_threshold = rospy.get_param('/rrtmpLocalNode/angle_threshold', 0.785)
+mpArray = rospy.get_param('/rrtmpLocalNode/motion_primitive_array', [[0.5, -0.2], [0.5, 0.0], [0.5, 0.2]])
 obs = rc.Obstacle([], obs_inflation_radius)
 maxX = 100
 minX = 0
@@ -103,7 +103,7 @@ def init_callback(data):
     rospy.loginfo("Initial Pose: (%d, %d, %f)", qInit[0], qInit[1], qInit[2])
 
 
-def rrtmp_ros():
+def rrtmpLocal_ros():
     # global variables necessary for planner
     global rRadius
     global obs
@@ -125,7 +125,7 @@ def rrtmp_ros():
     global step_size
     global mpArray
     ########################################
-    rospy.init_node('rrtmp_ros', anonymous=True)
+    rospy.init_node('rrtmpLocal_ros', anonymous=True)
     rate = rospy.Rate(30)
     path_pub = rospy.Publisher('global_path', Path, queue_size=100)
     tree_pub = rospy.Publisher('tree', PoseArray, queue_size=100)
@@ -198,6 +198,6 @@ def rrtmp_ros():
 
 if __name__ == '__main__':
     try:
-        rrtmp_ros()
+        rrtmpLocal_ros()
     except rospy.ROSInterruptException:
         pass

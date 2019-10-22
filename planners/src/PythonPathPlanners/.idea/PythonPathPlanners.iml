@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/RRT_ROS" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/RRT_MP" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/RRT_STAR" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/RRT_LOCAL_MP" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv-2-7" />
     </content>

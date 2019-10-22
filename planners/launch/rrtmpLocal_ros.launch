@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" value="true"/>
+
+  <remap from="scan" to="base_scan"/>
+
+  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/basic.world"/>
+
+  <node pkg="amcl" type="amcl" name="amcl">
+    <param name="use_map_topic" value="true"/>
+    <param name="base_frame_id" value="base_footprint"/>
+    <param name="tf_broadcast" value="true"/>
+    <param name="odom_model_type" value="diff-corrected"/>
+    <param name="odom_alpha1" value="0.000000001"/>
+    <param name="odom_alpha2" value="0.000000001"/>
+    <param name="odom_alpha3" value="0.000000001"/>
+    <param name="odom_alpha4" value="0.000000001"/>
+  </node>
+
+  <!--node pkg="costmap_2d" type="costmap_2d_node" name="local_costmap_2d_node">
+    <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="costmap"/>
+    <rosparam file="$(find planners)/launch/config/local_costmap_params.yaml" command="load" ns="costmap"/>
+  </node>
+
+  <node pkg="costmap_2d" type="costmap_2d_node" name="global_costmap_2d_node">
+    <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="costmap"/>
+    <rosparam file="$(find planners)/launch/config/global_costmap_params.yaml" command="load" ns="costmap"/>
+  </node-->
+
+  <node pkg="move_base" type="move_base" name="move_base" output="screen">
+    <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+    <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+    <rosparam file="$(find planners)/launch/config/local_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find planners)/launch/config/global_costmap_params.yaml" command="load"/>
+  </node>
+
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/basic_map_scanned.pgm 0.050000"/>
+  
+  <node pkg="tf" type="static_transform_publisher" name="stf_pub1" args="0 0 0 0 0 0 map global_path 100"/>
+  <node pkg="tf" type="static_transform_publisher" name="stf_pub2" args="0 0 0 0 0 0 map tree 100"/>
+  <!--node pkg="tf" type="static_transform_publisher" name="stf_pub3" args="0 0 0 0 0 0 base_footprint map 100"/-->
+  
+  <node pkg="planners" type="rrtmpLocalNode.py" name="rrtmpLocalNode" output="screen">
+    <rosparam param="motion_primitive_array">[[1.0, -0.5], [1.0, 0.0], [1.0, 0.5]]</rosparam>
+  </node>
+
+  <node pkg="rviz" type="rviz" name="rviz"/>
+</launch>

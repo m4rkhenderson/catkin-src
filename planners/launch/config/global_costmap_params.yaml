@@ -1,0 +1,23 @@
+global_costmap:
+  global_frame: map
+  robot_base_frame: base_footprint
+  update_frequency: 10.0
+  publish_frequency: 5.0
+  resolution: 0.075 #map generated from slam has resolution of 0.05
+  track_unknown_space: true
+  static_map: true
+  rolling_window: false
+  always_send_full_costmap: true
+
+  plugins:
+    - name: inflation_layer
+      type: "costmap_2d::InflationLayer"
+    - name: static_layer
+      type: "costmap_2d::StaticLayer"
+    - name: obstacle_layer
+      type: "costmap_2d::ObstacleLayer"
+
+  static_layer:
+    unknown_cost_value: -1
+    lethal_cost_threshold: 100
+  map_topic: map
