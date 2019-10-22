@@ -18,21 +18,12 @@
     <param name="odom_alpha4" value="0.000000001"/>
   </node>
 
-  <!--node pkg="costmap_2d" type="costmap_2d_node" name="local_costmap_2d_node">
-    <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="costmap"/>
-    <rosparam file="$(find planners)/launch/config/local_costmap_params.yaml" command="load" ns="costmap"/>
-  </node>
-
-  <node pkg="costmap_2d" type="costmap_2d_node" name="global_costmap_2d_node">
-    <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="costmap"/>
-    <rosparam file="$(find planners)/launch/config/global_costmap_params.yaml" command="load" ns="costmap"/>
-  </node-->
-
   <node pkg="move_base" type="move_base" name="move_base" output="screen">
     <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
     <rosparam file="$(find planners)/launch/config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
     <rosparam file="$(find planners)/launch/config/local_costmap_params.yaml" command="load"/>
     <rosparam file="$(find planners)/launch/config/global_costmap_params.yaml" command="load"/>
+    <param name="base_local_planner" value="rrt_planner/RRTPlanner"/>
   </node>
 
   <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/basic_map_scanned.pgm 0.050000"/>

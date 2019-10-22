@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_geometry_msgs
   tf2_ros
+  base_local_planner
 )
 
 ## System dependencies are found with CMake's conventions
@@ -146,9 +147,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
     PATTERN ".svn" EXCLUDE
     )
 
-#install(FILES bgp_plugin.xml
-#    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#    )
+install(FILES rlp_plugin.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    )
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp

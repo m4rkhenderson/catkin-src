@@ -56,6 +56,8 @@ namespace rrt_planner{
       bool initialized_;
       tf2_ros::Buffer* tf_;
       ros::Publisher l_plan_pub_;
+      ros::Publisher g_plan_pub_;
+      ros::Publisher cmd_vel_pub_;
       ros::Subscriber l_costmap_sub_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D* costmap_;
@@ -85,6 +87,7 @@ namespace rrt_planner{
       double l_cm_pose_x_;
       double l_cm_pose_y_;
       std::vector<rrt_planner::RRTPlanner::obstacle_t> l_cm_obs_;
+      ros_cmd_t path_and_cmd_;
 
       // define RRT private member functions
       ros_cmd_t rrt(vertex_t qInit, vertex_t qGoal);
@@ -95,6 +98,7 @@ namespace rrt_planner{
       vertex_t sampling(int xMax, int yMax, int xMin, int yMin);
       vertex_t steering(vertex_t q, vertex_t qNear, int cntID, double dMax, double aMax);
       std::vector<vertex_t> motionPrimitives(vertex_t q, std::vector<RRTPlanner::obstacle_t> obs, int cntID, int nSteps, double tStep, std::vector<velocity_t> mpArray, double radius);
+      void velocityManager(std::vector<geometry_msgs::Twist> cmd);
 
   };
 };

@@ -1,0 +1,7 @@
+<library path="lib/librrt_planner">
+  <class name="rrt_planner/RRTPlanner" type="rrt_planner::RRTPlanner" base_class_type="nav_core::BaseLocalPlanner">
+    <description>
+      An implementation of an RRT based local planner utilizing motion primitives.
+    </description>
+  </class>
+</library>

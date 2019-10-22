@@ -59,6 +59,8 @@ namespace rrt_planner {
       }
 
       l_plan_pub_ = private_nh.advertise<nav_msgs::Path>("local_plan", 1);
+      g_plan_pub_ = private_nh.advertise<nav_msgs::Path>("global_plan", 1);
+      cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
       tf_ = tf;
       costmap_ros_ = costmap_ros;
@@ -146,11 +148,13 @@ namespace rrt_planner {
       ROS_ERROR("Could not get costmap pointer");
     }
 
+    nav_msgs::Path global_plan;
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
     if(! planner_util_.getLocalPlan(current_pose_, transformed_plan)){ // get transformed global plan
       ROS_ERROR("Could not get local plan");
       return false;
     }
+    global_plan.poses = transformed_plan; // put transformed plan into a Path data type for publishing
 
     if(transformed_plan.empty()){
       ROS_WARN_NAMED("rrt_planner", "Received an empty transformed plan.");
@@ -165,7 +169,12 @@ namespace rrt_planner {
                                       transformed_plan[0].pose.position.y/(costmap_ -> getResolution()),
                                                    2*asin(transformed_plan[0].pose.orientation.z)}, 0, {0, 0}};
 
-    RRTPlanner::rrt(qInit, qGoal);
+    path_and_cmd_ = RRTPlanner::rrt(qInit, qGoal);
+
+    l_plan_pub_.publish(path_and_cmd_.path);  // publish the local and global plans
+    g_plan_pub_.publish(global_plan);
+
+    RRTPlanner::velocityManager(path_and_cmd_.cmd);
   }
 
 
@@ -426,5 +435,18 @@ namespace rrt_planner {
     }
 
     return branch;
+  }
+
+/********************************************************************************************************************/
+  void RRTPlanner::velocityManager(std::vector<geometry_msgs::Twist> cmd){
+    ros::Time current_time, last_time;
+    for(int i=0; i<cmd.size(); i++){
+      cmd_vel_pub_.publish(cmd[i]);
+      last_time = ros::Time::now();
+      current_time = ros::Time::now();
+      while((current_time - last_time).toSec() < time_step_){
+        current_time = ros::Time::now();
+      }
+    }
   }
 }
