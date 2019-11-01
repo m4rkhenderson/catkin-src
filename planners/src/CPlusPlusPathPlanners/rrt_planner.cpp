@@ -6,7 +6,7 @@
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -20,26 +20,38 @@ namespace rrt_planner {
 
 
 /********************************************************************************************************************/
-  RRTPlanner::RRTPlanner() : initialized_(false), odom_helper_("odom"){
+  RRTPlanner::RRTPlanner() : initialized_(false), odom_helper_("odom"), tf_(NULL), costmap_ros_(NULL){
 
+  }
+
+/********************************************************************************************************************/
+  RRTPlanner::RRTPlanner(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros) :
+    initialized_(false), odom_helper_("odom"), tf_(NULL), costmap_ros_(NULL){
+
+    initialize(name, tf, costmap_ros);
   }
 
 /********************************************************************************************************************/
   void RRTPlanner::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros){
     if(initialized_ == false){
+      ROS_INFO("Initializing Local PLanner");
 
       ros::NodeHandle private_nh("~/" + name);
 
-      private_nh.param("robot_radius", robot_radius_, 5);
+      private_nh.param("robot_radius", robot_radius_, 2);
       private_nh.param("goal_tolerance", goal_tolerance_, 10);
+      private_nh.param("path_tolerance", path_tolerance_, 5);
+      private_nh.param("path_checkpoint_resolution", path_checkpoint_resolution_, 1);
       private_nh.param("obstacle_inflation_radius", obstacle_inflation_radius_, 1);
-      private_nh.param("time_step", time_step_, 0.25);
+      private_nh.param("time_step", time_step_, 0.3);
       private_nh.param("num_step", num_step_, 3);
       private_nh.param("linear_velocity_max", linear_velocity_max_, 0.5);
-      private_nh.param("angular_velocity_max", angular_velocity_max_, 0.2);
+      private_nh.param("angular_velocity_max", angular_velocity_max_, 1.0);
       private_nh.param("linear_velocity_min", linear_velocity_min_, 0.0);
       private_nh.param("angular_velocity_min", angular_velocity_min_, 0.0);
       private_nh.param("motion_primitive_resolution", motion_primitive_resolution_, 3);
+      private_nh.param("max_iterations", max_iterations_, 100);
+      private_nh.param("controller_frequency", controller_frequency_, 10.0);
 
 
       if(motion_primitive_resolution_ < 2){
@@ -54,17 +66,44 @@ namespace rrt_planner {
               + linear_velocity_min_;  // will make identical motion primitives if max = min
           motion_primitive.vth = j*((angular_velocity_max_ - angular_velocity_min_)/(motion_primitive_resolution_ - 1))
               + angular_velocity_min_; // will make identical motion primitives if max = min
-          motion_primitive_array_.push_back(motion_primitive);
+          motion_primitive_array_const_.push_back(motion_primitive);
+        }
+        for(int j=0; j<motion_primitive_resolution_; j++){
+          motion_primitive.v = i*((linear_velocity_max_ - linear_velocity_min_)/(motion_primitive_resolution_ - 1))
+              + linear_velocity_min_;  // will make identical motion primitives if max = min
+          motion_primitive.vth = -1*(j*((angular_velocity_max_ - angular_velocity_min_)/(motion_primitive_resolution_ - 1))
+              + angular_velocity_min_); // will make identical motion primitives if max = min
+          motion_primitive_array_const_.push_back(motion_primitive);
+        }
+
+        // Comment out next section to disable backwards motion
+        for(int j=0; j<motion_primitive_resolution_; j++){
+          motion_primitive.v = -1*(i*((linear_velocity_max_ - linear_velocity_min_)/(motion_primitive_resolution_ - 1))
+              + linear_velocity_min_);  // will make identical motion primitives if max = min
+          motion_primitive.vth = j*((angular_velocity_max_ - angular_velocity_min_)/(motion_primitive_resolution_ - 1))
+              + angular_velocity_min_; // will make identical motion primitives if max = min
+          motion_primitive_array_const_.push_back(motion_primitive);
+        }
+        for(int j=0; j<motion_primitive_resolution_; j++){
+          motion_primitive.v = -1*(i*((linear_velocity_max_ - linear_velocity_min_)/(motion_primitive_resolution_ - 1))
+              + linear_velocity_min_);  // will make identical motion primitives if max = min
+          motion_primitive.vth = -1*(j*((angular_velocity_max_ - angular_velocity_min_)/(motion_primitive_resolution_ - 1))
+              + angular_velocity_min_); // will make identical motion primitives if max = min
+          motion_primitive_array_const_.push_back(motion_primitive);
         }
       }
 
       l_plan_pub_ = private_nh.advertise<nav_msgs::Path>("local_plan", 1);
       g_plan_pub_ = private_nh.advertise<nav_msgs::Path>("global_plan", 1);
       cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+      tree_pub_ = private_nh.advertise<geometry_msgs::PoseArray>("tree", 100);
 
       tf_ = tf;
       costmap_ros_ = costmap_ros;
       costmap_ros_ -> getRobotPose(current_pose_);
+      global_frame_ = costmap_ros_ -> getGlobalFrameID();
+
+      ROS_INFO("Global_Frame: %s", global_frame_.c_str());
 
       costmap_2d::Costmap2D* costmap = costmap_ros_ -> getCostmap();
       planner_util_.initialize(tf, costmap, costmap_ros_ -> getGlobalFrameID());
@@ -114,7 +153,7 @@ namespace rrt_planner {
       return false;
     }
 
-    if(! planner_util_.getGoal(goal_pose_)){
+    if(! base_local_planner::getGoalPose(*tf_, global_plan_, global_frame_, goal_pose_)){
       ROS_ERROR("Could not get goal pose");
       return false;
     }
@@ -125,19 +164,30 @@ namespace rrt_planner {
     }
 
     dX = current_pose_.pose.position.x - goal_pose_.pose.position.x;
-    dY = current_pose_.pose.position.y - goal_pose_.pose.position.x;
+    dY = current_pose_.pose.position.y - goal_pose_.pose.position.y;
     d = sqrt(dX*dX + dY*dY)/(costmap_ -> getResolution());
-    infD = infD = d + -1*(goal_tolerance_ + robot_radius_);
-    if(infD > 0){
+    infD = d + -1*(goal_tolerance_ + robot_radius_);
+    if(infD <= 0){
       reached_goal_ = true;
+      geometry_msgs::Twist cmd;
+      cmd.linear.x = 0;
+      cmd.linear.y = 0;
+      cmd.linear.z = 0;
+      cmd.angular.x = 0;
+      cmd.angular.y = 0;
+      cmd.angular.z = 0;
+      cmd_vel_pub_.publish(cmd); // Tell Robot to Stop Upon Reaching Goal
+      ROS_INFO("The Goal Has Been Reached");
       return true;
     }
 
+    ROS_INFO("The Goal Has Not Been Reached Yet");
     return false;
   }
 
 /********************************************************************************************************************/
   bool RRTPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel){
+    ROS_INFO("Computing Velocity Commands");
     if(! costmap_ros_ -> getRobotPose(current_pose_)){
       ROS_ERROR("Could not get robot pose");
       return false;
@@ -148,33 +198,37 @@ namespace rrt_planner {
       ROS_ERROR("Could not get costmap pointer");
     }
 
-    nav_msgs::Path global_plan;
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
-    if(! planner_util_.getLocalPlan(current_pose_, transformed_plan)){ // get transformed global plan
-      ROS_ERROR("Could not get local plan");
+    if(! base_local_planner::transformGlobalPlan(*tf_, global_plan_, current_pose_, *costmap_, global_frame_, transformed_plan)){ // get transformed global plan
+      ROS_ERROR("Could not transform global plan");
       return false;
     }
-    global_plan.poses = transformed_plan; // put transformed plan into a Path data type for publishing
 
     if(transformed_plan.empty()){
       ROS_WARN_NAMED("rrt_planner", "Received an empty transformed plan.");
       return false;
     }
-    ROS_DEBUG_NAMED("rrt_planner", "Received a transformed plan with %zu points.", transformed_plan.size());
+
+    base_local_planner::prunePlan(current_pose_, transformed_plan, global_plan_); // Trim off parts of the global plan that are far enough behind the robot
+    ROS_INFO("Received a transformed plan with %zu points.", transformed_plan.size());
 
     RRTPlanner::vertex_t qInit = {0, {current_pose_.pose.position.x/(costmap_ -> getResolution()),
                                       current_pose_.pose.position.y/(costmap_ -> getResolution()),
                                                    2*asin(current_pose_.pose.orientation.z)}, 0, {0, 0}};
-    RRTPlanner::vertex_t qGoal = {0, {transformed_plan[0].pose.position.x/(costmap_ -> getResolution()),
-                                      transformed_plan[0].pose.position.y/(costmap_ -> getResolution()),
+    RRTPlanner::vertex_t qGoal = {0, {transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.x/(costmap_ -> getResolution()),
+                                      transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.y/(costmap_ -> getResolution()),
                                                    2*asin(transformed_plan[0].pose.orientation.z)}, 0, {0, 0}};
 
     path_and_cmd_ = RRTPlanner::rrt(qInit, qGoal);
 
-    l_plan_pub_.publish(path_and_cmd_.path);  // publish the local and global plans
-    g_plan_pub_.publish(global_plan);
+    ROS_INFO("Got path and velocity commands");
 
-    RRTPlanner::velocityManager(path_and_cmd_.cmd);
+    base_local_planner::publishPlan(path_and_cmd_.path, l_plan_pub_);
+    base_local_planner::publishPlan(transformed_plan, g_plan_pub_);
+
+    RRTPlanner::velocityManager();
+
+    return true;
   }
 
 
@@ -183,12 +237,20 @@ namespace rrt_planner {
 
 
 /********************************************************************************************************************/
-  RRTPlanner::ros_cmd_t RRTPlanner::rrt(RRTPlanner::vertex_t qInit, RRTPlanner::vertex_t qGoal){
+  RRTPlanner::ros_cmd_t RRTPlanner::rrt(RRTPlanner::vertex_t qInit, RRTPlanner::vertex_t qGoal){ // change to only activate after a set period of time to maintain controller frequency
     RRTPlanner::vertex_t qRand;
     RRTPlanner::vertex_t qNear;
     RRTPlanner::vertex_t qNew;
     std::vector<RRTPlanner::vertex_t> branch;
     RRTPlanner::ros_cmd_t path_and_cmd;
+    geometry_msgs::PoseStamped goalCheck = goal_pose_;
+    geometry_msgs::Pose point;
+    geometry_msgs::PoseArray points;
+    std::vector<geometry_msgs::Pose> tempPoints;
+    points.header.frame_id = global_frame_.c_str();
+    ros::WallTime current_time, previous_time;
+
+    int iterations = 0;
     int cntID = 0;
     double infD = 0;
     double d = 0;
@@ -199,7 +261,29 @@ namespace rrt_planner {
     tree_.clear();
     tree_.push_back(qInit);
 
-    while(path_found == false){
+//    if(path_and_cmd_.cmd.size() > 0){
+//      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+//      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
+//    }
+    previous_time = ros::WallTime::now();
+
+    ROS_INFO("RRT Planner Called");
+    while(path_found == false && iterations < max_iterations_){
+
+      current_time = ros::WallTime::now();
+      if(path_and_cmd_.cmd.size() > 0 && (current_time.toSec() - previous_time.toSec()) >= time_step_){
+        ROS_INFO("TIME PASSED: %f", (current_time - previous_time).toSec());
+        cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+        path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
+        previous_time = ros::WallTime::now();
+      }
+
+      if(base_local_planner::getGoalPose(*tf_, global_plan_, global_frame_, goal_pose_)){ //reset rrt planner if
+        if(goal_pose_.pose.position.x != goalCheck.pose.position.x ||                     //global goal changes
+           goal_pose_.pose.position.y != goalCheck.pose.position.y){
+          return path_and_cmd;
+        }
+      }
 
       RRTPlanner::localCostmap();
 
@@ -207,6 +291,7 @@ namespace rrt_planner {
                                    l_cm_pose_x_, l_cm_pose_y_);
 
       if(RRTPlanner::collisionTest(qRand, l_cm_obs_, robot_radius_) > 0){
+        ROS_INFO("Invalid Random Configuration");
         continue;
       }
 
@@ -219,23 +304,38 @@ namespace rrt_planner {
         cntID = branch.back().id;
       }
       else{
+        ROS_INFO("Failed to Form Valid Branch");
         continue;
       }
 
+      ROS_INFO("Added Branch to Tree");
       tree_.insert(tree_.end(), branch.begin(), branch.end()); // double check later
+
+      for(int i=0; i<branch.size(); i++){
+        point.position.x = branch[i].pose[0]*l_cm_resolution_;
+        point.position.y = branch[i].pose[1]*l_cm_resolution_;
+        point.position.z = 0.0;
+        point.orientation.x = 0.0;
+        point.orientation.y = 0.0;
+        point.orientation.z = sin(branch[i].pose[2]/2);
+        point.orientation.w = cos(branch[i].pose[2]/2);
+        tempPoints.push_back(point);
+      }
+      points.poses = tempPoints;
+      tree_pub_.publish(points);
 
       for(int i=0; i<branch.size(); i++){
         dX = branch[i].pose[0] - qGoal.pose[0];
         dY = branch[i].pose[1] - qGoal.pose[1];
         d = sqrt(dX*dX + dY*dY);
-        infD = d + -1*(goal_tolerance_ + robot_radius_);
-        if(infD > 0){
+        infD = d + -1*(path_tolerance_ + robot_radius_);
+        if(infD <= 0){
           path_found = true;
           path_and_cmd = RRTPlanner::extractPath(branch[i], tree_, qInit);
           break;
         }
       }
-
+      iterations++;
     }
 
     return path_and_cmd;
@@ -249,20 +349,27 @@ namespace rrt_planner {
     }
 
     rrt_planner::RRTPlanner::obstacle_t obs = {{0, 0}, 0};
+    l_cm_obs_.clear();
     l_cm_width_ = costmap_ -> getSizeInCellsX();
     l_cm_height_ = costmap_ -> getSizeInCellsY();
     l_cm_resolution_ = costmap_ -> getResolution();
     l_cm_pose_x_ = (costmap_ -> getOriginX()) / l_cm_resolution_;
     l_cm_pose_y_ = (costmap_ -> getOriginY()) / l_cm_resolution_;
 
-    for(unsigned int i=0; i<(l_cm_width_*l_cm_height_); i++){
-      if(rrt_local_costmap_.data[i] > 0){
-        obs.pose[0] = (i % l_cm_width_) + l_cm_pose_x_;
-        obs.pose[1] = (i / l_cm_width_) + l_cm_pose_y_;
-        obs.radius = obstacle_inflation_radius_;
-        l_cm_obs_.push_back(obs);
+    for(unsigned int i=0; i<l_cm_width_; i++){
+      for(unsigned int j=0; j<l_cm_height_; j++){
+        if((costmap_ -> getCost(i,j)) > 0){
+          obs.pose[0] = i + l_cm_pose_x_;
+          obs.pose[1] = j + l_cm_pose_y_;
+          obs.radius = obstacle_inflation_radius_;
+          l_cm_obs_.push_back(obs);
+        }
       }
     }
+
+    ROS_INFO("Number of Obstacles in Local Costmap: %d", l_cm_obs_.size());
+
+    motion_primitive_array_ = motion_primitive_array_const_;
 
     for(int i=0; i<motion_primitive_array_.size(); i++){ // convert from m/s to cell/s
       motion_primitive_array_[i].v = motion_primitive_array_[i].v/l_cm_resolution_;
@@ -276,7 +383,7 @@ namespace rrt_planner {
     double dX = 0;
     double dY = 0;
 
-    for(int i=0; i<obs.size(); i++){
+    for(int i=0; i<obs.size(); i++){        // NOTE: CostmapModel functions may be more useful here than other methods
       dX = q.pose[0] - obs[i].pose[0];
       dY = q.pose[1] - obs[i].pose[1];
       d = sqrt(dX*dX + dY*dY);
@@ -296,7 +403,7 @@ namespace rrt_planner {
   RRTPlanner::ros_cmd_t RRTPlanner::extractPath(RRTPlanner::vertex_t q, std::vector<RRTPlanner::vertex_t> tree,
                                          RRTPlanner::vertex_t qInit){
 
-    nav_msgs::Path path;
+    std::vector<geometry_msgs::PoseStamped> path;
     geometry_msgs::PoseStamped pose;
     std::vector<geometry_msgs::Twist> cmd;
     geometry_msgs::Twist vel;
@@ -304,22 +411,20 @@ namespace rrt_planner {
     RRTPlanner::vertex_t v = q;
 
     while(v.id != qInit.id){
-      pose.pose.position.x = v.pose[0];
-      pose.pose.position.y = v.pose[1];
+      pose.pose.position.x = v.pose[0]*l_cm_resolution_;
+      pose.pose.position.y = v.pose[1]*l_cm_resolution_;
       pose.pose.orientation.z = sin(v.pose[2]/2);
       pose.pose.orientation.w = cos(v.pose[2]/2);
       vel.linear.x = v.vel[0];
       vel.angular.z = v.vel[1];
-//      pose.header.stamp = ros::Time::now();
-//      pose.header.frame_id = "local_plan";
-      path.poses.push_back(pose);
-      cmd.push_back(vel);
+      pose.header.frame_id = global_frame_.c_str();
+      path.emplace(path.begin(), pose);
+      cmd.emplace(cmd.begin(), vel);
       v = tree[v.pid];
     }
 
-    path.header.stamp = ros::Time::now();
-    path.header.frame_id = "local_plan";
-
+    path_and_cmd.path = path;
+    path_and_cmd.cmd = cmd;
 
     return path_and_cmd;
   }
@@ -422,7 +527,7 @@ namespace rrt_planner {
         x = x + dx;
         y = y + dy;
 
-        twig = {cntID, {x, y, th}, parent, {v, vth}};
+        twig = {cntID, {x, y, th}, parent, {v*l_cm_resolution_, vth}};
         if(RRTPlanner::collisionTest(twig, obs, radius) > 0){
           break;
         }
@@ -438,14 +543,34 @@ namespace rrt_planner {
   }
 
 /********************************************************************************************************************/
-  void RRTPlanner::velocityManager(std::vector<geometry_msgs::Twist> cmd){
-    ros::Time current_time, last_time;
-    for(int i=0; i<cmd.size(); i++){
-      cmd_vel_pub_.publish(cmd[i]);
-      last_time = ros::Time::now();
-      current_time = ros::Time::now();
-      while((current_time - last_time).toSec() < time_step_){
-        current_time = ros::Time::now();
+  void RRTPlanner::velocityManager(){
+    ros::WallTime current_time, previous_time, initial_time;
+    if(path_and_cmd_.cmd.size() > 0){
+      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
+    }
+    else{
+      geometry_msgs::Twist stop;
+      stop.linear.x = 0.0;
+      stop.linear.y = 0.0;
+      stop.linear.z = 0.0;
+      stop.angular.x = 0.0;
+      stop.angular.y = 0.0;
+      stop.angular.z = 0.0;
+      cmd_vel_pub_.publish(stop);
+    }
+    initial_time = ros::WallTime::now();
+    previous_time = ros::WallTime::now();
+    while(path_and_cmd_.cmd.size() > 0){
+      current_time = ros::WallTime::now();
+      if((current_time.toSec() - previous_time.toSec()) >= time_step_){
+        cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+        path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
+        ROS_INFO("TIME PASSED: %f", (current_time.toSec() - previous_time.toSec()));
+        previous_time = ros::WallTime::now();
+      }
+      if(double(current_time.toSec() - initial_time.toSec()) >= double(1/controller_frequency_)){
+        break;
       }
     }
   }

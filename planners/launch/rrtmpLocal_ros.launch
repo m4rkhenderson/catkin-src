@@ -24,17 +24,10 @@
     <rosparam file="$(find planners)/launch/config/local_costmap_params.yaml" command="load"/>
     <rosparam file="$(find planners)/launch/config/global_costmap_params.yaml" command="load"/>
     <param name="base_local_planner" value="rrt_planner/RRTPlanner"/>
+    <remap from="/move_base/RRTPlanner/cmd_vel" to="cmd_vel"/>
   </node>
 
   <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/basic_map_scanned.pgm 0.050000"/>
-  
-  <node pkg="tf" type="static_transform_publisher" name="stf_pub1" args="0 0 0 0 0 0 map global_path 100"/>
-  <node pkg="tf" type="static_transform_publisher" name="stf_pub2" args="0 0 0 0 0 0 map tree 100"/>
-  <!--node pkg="tf" type="static_transform_publisher" name="stf_pub3" args="0 0 0 0 0 0 base_footprint map 100"/-->
-  
-  <node pkg="planners" type="rrtmpLocalNode.py" name="rrtmpLocalNode" output="screen">
-    <rosparam param="motion_primitive_array">[[1.0, -0.5], [1.0, 0.0], [1.0, 0.5]]</rosparam>
-  </node>
 
   <node pkg="rviz" type="rviz" name="rviz"/>
 </launch>

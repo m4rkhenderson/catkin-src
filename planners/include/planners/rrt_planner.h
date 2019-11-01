@@ -8,6 +8,7 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <base_local_planner/odometry_helper_ros.h>
 #include <base_local_planner/local_planner_util.h>
@@ -20,7 +21,7 @@ namespace rrt_planner{
 
       RRTPlanner();
 
-      //RRTPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
+      RRTPlanner(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros);
 
       void initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros);
 
@@ -46,7 +47,7 @@ namespace rrt_planner{
         double vth;
       };
       struct ros_cmd_t{
-        nav_msgs::Path path;
+        std::vector<geometry_msgs::PoseStamped> path;
         std::vector<geometry_msgs::Twist> cmd;
       };
 
@@ -58,7 +59,7 @@ namespace rrt_planner{
       ros::Publisher l_plan_pub_;
       ros::Publisher g_plan_pub_;
       ros::Publisher cmd_vel_pub_;
-      ros::Subscriber l_costmap_sub_;
+      ros::Publisher tree_pub_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D* costmap_;
       geometry_msgs::PoseStamped current_pose_;
@@ -67,11 +68,15 @@ namespace rrt_planner{
       base_local_planner::OdometryHelperRos odom_helper_;
       std::string odom_topic_;
       std::vector<geometry_msgs::PoseStamped> global_plan_;
+      std::string global_frame_;
       bool reached_goal_;
       geometry_msgs::PoseStamped goal_pose_;
       int robot_radius_;
       int goal_tolerance_;
+      int path_tolerance_;
+      int path_checkpoint_resolution_;
       std::vector<velocity_t> motion_primitive_array_;
+      std::vector<velocity_t> motion_primitive_array_const_;
       double linear_velocity_max_;
       double angular_velocity_max_;
       double linear_velocity_min_;
@@ -79,6 +84,7 @@ namespace rrt_planner{
       int motion_primitive_resolution_;
       double time_step_;
       int num_step_;
+      int max_iterations_;
       std::vector<vertex_t> tree_;
       nav_msgs::OccupancyGrid rrt_local_costmap_;
       unsigned int l_cm_width_;
@@ -88,6 +94,7 @@ namespace rrt_planner{
       double l_cm_pose_y_;
       std::vector<rrt_planner::RRTPlanner::obstacle_t> l_cm_obs_;
       ros_cmd_t path_and_cmd_;
+      double controller_frequency_;
 
       // define RRT private member functions
       ros_cmd_t rrt(vertex_t qInit, vertex_t qGoal);
@@ -98,7 +105,7 @@ namespace rrt_planner{
       vertex_t sampling(int xMax, int yMax, int xMin, int yMin);
       vertex_t steering(vertex_t q, vertex_t qNear, int cntID, double dMax, double aMax);
       std::vector<vertex_t> motionPrimitives(vertex_t q, std::vector<RRTPlanner::obstacle_t> obs, int cntID, int nSteps, double tStep, std::vector<velocity_t> mpArray, double radius);
-      void velocityManager(std::vector<geometry_msgs::Twist> cmd);
+      void velocityManager();
 
   };
 };
