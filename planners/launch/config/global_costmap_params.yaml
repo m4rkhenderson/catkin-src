@@ -10,14 +10,15 @@ global_costmap:
   always_send_full_costmap: true
 
   plugins:
-    - name: inflation_layer
-      type: "costmap_2d::InflationLayer"
     - name: static_layer
       type: "costmap_2d::StaticLayer"
+    - name: inflation_layer
+      type: "costmap_2d::InflationLayer"
     - name: obstacle_layer
       type: "costmap_2d::ObstacleLayer"
 
   static_layer:
     unknown_cost_value: -1
     lethal_cost_threshold: 100
-  map_topic: map
+    map_topic: map
+

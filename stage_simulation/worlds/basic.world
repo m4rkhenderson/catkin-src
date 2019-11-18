@@ -20,7 +20,7 @@ model
   size [ 20.0 20.0 2.0 ]
   pose [ 0.0 0.0 0.0 0.0 ]
   color "gray30"
-  bitmap "maps/basic_map.png"
+  bitmap "maps/test_map_2.png"
 
   boundary 1
 
@@ -38,6 +38,6 @@ model
 diff_drive_circle_robot
 (
   name "r0"
-  pose [ 0.0 0.0 0.0 0.0 ]
+  pose [ 0.0 -5.0 0.0 0.0 ]
   alwayson 1
 )

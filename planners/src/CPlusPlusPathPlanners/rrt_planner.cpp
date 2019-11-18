@@ -52,7 +52,9 @@ namespace rrt_planner {
       private_nh.param("motion_primitive_resolution", motion_primitive_resolution_, 3);
       private_nh.param("max_iterations", max_iterations_, 100);
       private_nh.param("controller_frequency", controller_frequency_, 10.0);
-
+      private_nh.param("local_costmap_border", l_cm_border_, true);
+      private_nh.param("forward_bias", forward_bias_, 2);
+      private_nh.param<std::string>("velocity_topic", velocity_topic_, "cmd_vel");
 
       if(motion_primitive_resolution_ < 2){
         ROS_WARN("Motion Primitive Resolution must be greater than 1,"
@@ -76,15 +78,15 @@ namespace rrt_planner {
           motion_primitive_array_const_.push_back(motion_primitive);
         }
 
-        // Comment out next section to disable backwards motion
-        for(int j=0; j<motion_primitive_resolution_; j++){
+        // Comment out section to disable backwards motion
+        for(int j=0; j<int(motion_primitive_resolution_/forward_bias_); j++){
           motion_primitive.v = -1*(i*((linear_velocity_max_ - linear_velocity_min_)/(motion_primitive_resolution_ - 1))
               + linear_velocity_min_);  // will make identical motion primitives if max = min
           motion_primitive.vth = j*((angular_velocity_max_ - angular_velocity_min_)/(motion_primitive_resolution_ - 1))
               + angular_velocity_min_; // will make identical motion primitives if max = min
           motion_primitive_array_const_.push_back(motion_primitive);
         }
-        for(int j=0; j<motion_primitive_resolution_; j++){
+        for(int j=0; j<int(motion_primitive_resolution_/forward_bias_); j++){
           motion_primitive.v = -1*(i*((linear_velocity_max_ - linear_velocity_min_)/(motion_primitive_resolution_ - 1))
               + linear_velocity_min_);  // will make identical motion primitives if max = min
           motion_primitive.vth = -1*(j*((angular_velocity_max_ - angular_velocity_min_)/(motion_primitive_resolution_ - 1))
@@ -95,7 +97,7 @@ namespace rrt_planner {
 
       l_plan_pub_ = private_nh.advertise<nav_msgs::Path>("local_plan", 1);
       g_plan_pub_ = private_nh.advertise<nav_msgs::Path>("global_plan", 1);
-      cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+      cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>(velocity_topic_, 10);
       tree_pub_ = private_nh.advertise<geometry_msgs::PoseArray>("tree", 100);
 
       tf_ = tf;
@@ -349,6 +351,7 @@ namespace rrt_planner {
     }
 
     rrt_planner::RRTPlanner::obstacle_t obs = {{0, 0}, 0};
+    obs.radius = obstacle_inflation_radius_;
     l_cm_obs_.clear();
     l_cm_width_ = costmap_ -> getSizeInCellsX();
     l_cm_height_ = costmap_ -> getSizeInCellsY();
@@ -361,13 +364,36 @@ namespace rrt_planner {
         if((costmap_ -> getCost(i,j)) > 0){
           obs.pose[0] = i + l_cm_pose_x_;
           obs.pose[1] = j + l_cm_pose_y_;
-          obs.radius = obstacle_inflation_radius_;
           l_cm_obs_.push_back(obs);
         }
       }
     }
 
-    ROS_INFO("Number of Obstacles in Local Costmap: %d", l_cm_obs_.size());
+    // generates a thin border around the local costmap to prevent expanding beyond it
+    if(l_cm_border_ == true){
+      for(unsigned int i=0; i<l_cm_width_; i++){
+        obs.pose[0] = i + l_cm_pose_x_;
+        obs.pose[1] = l_cm_pose_y_;
+        l_cm_obs_.push_back(obs);
+      }
+      for(unsigned int i=0; i<l_cm_height_; i++){
+        obs.pose[0] = l_cm_pose_x_;
+        obs.pose[1] = i + l_cm_pose_y_;
+        l_cm_obs_.push_back(obs);
+      }
+      for(unsigned int i=0; i<l_cm_width_; i++){
+        obs.pose[0] = i + l_cm_pose_x_;
+        obs.pose[1] = l_cm_height_ + l_cm_pose_y_;
+        l_cm_obs_.push_back(obs);
+      }
+      for(unsigned int i=0; i<l_cm_height_; i++){
+        obs.pose[0] = l_cm_width_ + l_cm_pose_x_;
+        obs.pose[1] = i + l_cm_pose_y_;
+        l_cm_obs_.push_back(obs);
+      }
+    }
+
+    ROS_INFO("Number of Obstacles in Local Costmap: %d", int(l_cm_obs_.size()));
 
     motion_primitive_array_ = motion_primitive_array_const_;
 

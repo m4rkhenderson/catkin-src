@@ -150,6 +150,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(FILES rlp_plugin.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
+
+add_executable(remap_scan src/REMAP/remap_scan.cpp)
+target_link_libraries(remap_scan ${catkin_LIBRARIES})
+
+add_executable(dynamic_obstacles src/OBSTACLES/dynamic_obstacles.cpp)
+target_link_libraries(dynamic_obstacles ${catkin_LIBRARIES})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp

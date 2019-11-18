@@ -6,6 +6,6 @@
     <node pkg="tf" type="static_transform_publisher" name="stf_pub1" args="0 0 0 0 0 0 map global_path 100"/>
     <node pkg="tf" type="static_transform_publisher" name="stf_pub2" args="0 0 0 0 0 0 map tree 100"/>
     <node pkg="planners" type="rrtmpNode.py" name="rrtmpNode" output="screen">
-        <rosparam param="motion_primitive_array">[[5.0, -0.5], [5.0, 0.0], [5.0, 0.5]]</rosparam>
+        <rosparam param="motion_primitive_array">[[0.5, -0.5], [0.5, 0.0], [0.5, 0.5]]</rosparam>
     </node>
 </launch>

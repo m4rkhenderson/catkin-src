@@ -92,9 +92,13 @@ namespace rrt_planner{
       double l_cm_resolution_;
       double l_cm_pose_x_;
       double l_cm_pose_y_;
+      bool l_cm_border_;
       std::vector<rrt_planner::RRTPlanner::obstacle_t> l_cm_obs_;
       ros_cmd_t path_and_cmd_;
       double controller_frequency_;
+      int forward_bias_;
+      std::string velocity_topic_;
+
 
       // define RRT private member functions
       ros_cmd_t rrt(vertex_t qInit, vertex_t qGoal);
