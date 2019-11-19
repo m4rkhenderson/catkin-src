@@ -10,9 +10,9 @@ RRTPlanner:
   angular_velocity_max: 1.0
   linear_velocity_min: 0.0
   angular_velocity_min: 0.0
-  motion_primitive_resolution: 5 # odd numbers work best
+  motion_primitive_resolution: 3 # odd numbers work best
   max_iterations: 100
   controller_frequency: 10.0
   local_costmap_border: true
-  forward_bias: 2
+  forward_bias: 6
   velocity_topic: "robot_0/cmd_vel"

@@ -2,6 +2,7 @@
 #include <planners/rrt_planner.h>
 #include <pluginlib/class_list_macros.h>
 #include <base_local_planner/goal_functions.h>
+#include <tf/tf.h>
 #include <tf2/convert.h>
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -214,12 +215,28 @@ namespace rrt_planner {
     base_local_planner::prunePlan(current_pose_, transformed_plan, global_plan_); // Trim off parts of the global plan that are far enough behind the robot
     ROS_INFO("Received a transformed plan with %zu points.", transformed_plan.size());
 
+    tf::Quaternion q1(current_pose_.pose.orientation.x,
+                     current_pose_.pose.orientation.y,
+                     current_pose_.pose.orientation.z,
+                     current_pose_.pose.orientation.w);
+    tf::Matrix3x3 m1(q1);
+    double roll1, pitch1, yaw1;
+    m1.getRPY(roll1, pitch1, yaw1);
+
+    tf::Quaternion q2(current_pose_.pose.orientation.x,
+                     current_pose_.pose.orientation.y,
+                     current_pose_.pose.orientation.z,
+                     current_pose_.pose.orientation.w);
+    tf::Matrix3x3 m2(q2);
+    double roll2, pitch2, yaw2;
+    m2.getRPY(roll2, pitch2, yaw2);
+
     RRTPlanner::vertex_t qInit = {0, {current_pose_.pose.position.x/(costmap_ -> getResolution()),
                                       current_pose_.pose.position.y/(costmap_ -> getResolution()),
-                                                   2*asin(current_pose_.pose.orientation.z)}, 0, {0, 0}};
+                                                   yaw1}, 0, {0, 0}};
     RRTPlanner::vertex_t qGoal = {0, {transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.x/(costmap_ -> getResolution()),
                                       transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.y/(costmap_ -> getResolution()),
-                                                   2*asin(transformed_plan[0].pose.orientation.z)}, 0, {0, 0}};
+                                                   yaw2}, 0, {0, 0}};
 
     path_and_cmd_ = RRTPlanner::rrt(qInit, qGoal);
 
@@ -271,6 +288,7 @@ namespace rrt_planner {
 
     ROS_INFO("RRT Planner Called");
     while(path_found == false && iterations < max_iterations_){
+      iterations++;
 
       current_time = ros::WallTime::now();
       if(path_and_cmd_.cmd.size() > 0 && (current_time.toSec() - previous_time.toSec()) >= time_step_){
@@ -337,7 +355,6 @@ namespace rrt_planner {
           break;
         }
       }
-      iterations++;
     }
 
     return path_and_cmd;

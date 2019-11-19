@@ -15,6 +15,10 @@
     </rosparam>
   </node-->
   <node pkg="planners" type="remap_scan" name="remap_scan"/>
+  <node pkg="planners" type="clear_scan" name="clear_scan">
+    <param name="laser_frame_id" value="robot_0/base_laser_link"/>
+    <param name="reduction_factor" value="0.1"/>
+  </node>
 
   <group ns="robot_0">
     <!--param name="tf_prefix" value="robot_0"/-->
@@ -24,10 +28,10 @@
       <param name="odom_frame_id" value="robot_0/odom"/>
       <param name="tf_broadcast" value="true"/>
       <param name="odom_model_type" value="diff-corrected"/>
-      <param name="odom_alpha1" value="0.0000000001"/>
-      <param name="odom_alpha2" value="0.0000000001"/>
-      <param name="odom_alpha3" value="0.0000000001"/>
-      <param name="odom_alpha4" value="0.0000000001"/>
+      <param name="odom_alpha1" value="0.0"/>
+      <param name="odom_alpha2" value="0.0"/>
+      <param name="odom_alpha3" value="0.0"/>
+      <param name="odom_alpha4" value="0.0"/>
       <remap from="scan" to="base_scan"/>
       <remap from="static_map" to="/static_map"/>
       <remap from="map" to="/map"/>
@@ -44,7 +48,7 @@
     </node>
   </group>
 
-  <group ns="robot_1">
+  <!--group ns="robot_1">
     <node pkg="amcl" type="amcl" name="amcl">
       <param name="use_map_topic" value="true"/>
       <param name="base_frame_id" value="robot_1/base_footprint"/>
@@ -169,7 +173,7 @@
       <param name="obstacle_velocity" value="1.0"/>
       <param name="obstacle_steps" value="60"/>
     </node>
-  </group>
+  </group-->
 
   <node pkg="rviz" type="rviz" name="rviz">
     <remap from="initialpose" to="robot_0/initialpose"/><!--remap rviz initial position button-->

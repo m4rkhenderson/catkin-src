@@ -156,6 +156,9 @@ target_link_libraries(remap_scan ${catkin_LIBRARIES})
 
 add_executable(dynamic_obstacles src/OBSTACLES/dynamic_obstacles.cpp)
 target_link_libraries(dynamic_obstacles ${catkin_LIBRARIES})
+
+add_executable(clear_scan src/CLEAR_SCAN/clear_scan.cpp)
+target_link_libraries(clear_scan ${catkin_LIBRARIES})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp
