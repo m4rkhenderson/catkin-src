@@ -22,6 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   tf2_ros
   base_local_planner
+  interactive_markers
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -159,6 +161,10 @@ target_link_libraries(dynamic_obstacles ${catkin_LIBRARIES})
 
 add_executable(clear_scan src/CLEAR_SCAN/clear_scan.cpp)
 target_link_libraries(clear_scan ${catkin_LIBRARIES})
+
+add_executable(waypoint_markers src/WAYPOINTS/waypoint_markers.cpp)
+target_link_libraries(waypoint_markers ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp
