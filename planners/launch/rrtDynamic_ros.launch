@@ -22,6 +22,16 @@
 
   <group ns="robot_0">
     <!--param name="tf_prefix" value="robot_0"/-->
+    <node pkg="planners" type="waypoint_markers" name="waypoint_markers">
+      <param name="num_markers" value="5"/>
+      <param name="base_frame" value="/robot_0/base_footprint"/>
+    </node>
+
+    <node pkg="planners" type="obstacle_distance" name="obstacle_distance" output="screen">
+      <param name="costmap_topic" value="move_base/local_costmap/costmap"/>
+      <param name="base_frame" value="/robot_0/base_footprint"/>
+    </node>
+
     <node pkg="amcl" type="amcl" name="amcl">
       <param name="use_map_topic" value="true"/>
       <param name="base_frame_id" value="robot_0/base_footprint"/>
@@ -36,7 +46,7 @@
       <remap from="static_map" to="/static_map"/>
       <remap from="map" to="/map"/>
     </node>
-    <node pkg="move_base" type="move_base" name="move_base" output="screen">
+    <node pkg="move_base" type="move_base" name="move_base">
       <rosparam file="$(find planners)/launch/config/dynamic_costmap_common_params.yaml" command="load" ns="global_costmap"/>
       <rosparam file="$(find planners)/launch/config/dynamic_costmap_common_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find planners)/launch/config/dynamic_local_costmap_params.yaml" command="load"/>

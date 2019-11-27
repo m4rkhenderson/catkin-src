@@ -165,6 +165,9 @@ target_link_libraries(clear_scan ${catkin_LIBRARIES})
 add_executable(waypoint_markers src/WAYPOINTS/waypoint_markers.cpp)
 target_link_libraries(waypoint_markers ${catkin_LIBRARIES})
 
+add_executable(obstacle_distance src/DATA_COLLECTION/obstacle_distance.cpp)
+target_link_libraries(obstacle_distance ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp
