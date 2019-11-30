@@ -144,12 +144,25 @@ install(TARGETS rrt_planner
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     )
 
+add_library(rrtdmp_planner src/CPlusPlusPathPlanners/rrtdmp_planner.cpp)
+add_dependencies(rrtdmp_planner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(rrtdmp_planner ${catkin_LIBRARIES})
+
+install(TARGETS rrtdmp_planner
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    )
+
 install(DIRECTORY include/${PROJECT_NAME}/
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
     PATTERN ".svn" EXCLUDE
     )
 
 install(FILES rlp_plugin.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    )
+
+install(FILES rdmplp_plugin.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
