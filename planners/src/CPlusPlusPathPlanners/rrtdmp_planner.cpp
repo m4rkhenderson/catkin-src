@@ -15,7 +15,7 @@ PLUGINLIB_EXPORT_CLASS(rrtdmp_planner::RRTDMPPlanner, nav_core::BaseLocalPlanner
 
 namespace rrtdmp_planner {
 
-
+geometry_msgs::PoseArray RRTDMPPlanner::people_;
 
   // Public functions //
 
@@ -56,6 +56,17 @@ namespace rrtdmp_planner {
       private_nh.param("local_costmap_border", l_cm_border_, true);
       private_nh.param("forward_bias", forward_bias_, 2);
       private_nh.param<std::string>("velocity_topic", velocity_topic_, "cmd_vel");
+      private_nh.param("rule_offset", rule_offset_, 20.0);
+      private_nh.param("goal_offset", goal_offset_, 0.0);
+      private_nh.param("person_offset", person_offset_, 10.0);
+      private_nh.param("rule_scale", rule_scale_, 1.0);
+      private_nh.param("goal_scale", goal_scale_, 50.0);
+      private_nh.param("person_scale", person_scale_, 2.0);
+      private_nh.param("rule_weight", rule_weight_, 1.0);
+      private_nh.param("goal_weight", goal_weight_, 1.0);
+      private_nh.param("person_weight", person_weight_, 1.0);
+      private_nh.param("mp_range_scale", mp_range_scale_, 0.125);
+      private_nh.param("stop_loops", stop_loops_, 10);
 
       if(motion_primitive_resolution_ < 2){
         ROS_WARN("Motion Primitive Resolution must be greater than 1,"
@@ -100,6 +111,12 @@ namespace rrtdmp_planner {
       g_plan_pub_ = private_nh.advertise<nav_msgs::Path>("global_plan", 1);
       cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>(velocity_topic_, 10);
       tree_pub_ = private_nh.advertise<geometry_msgs::PoseArray>("tree", 100);
+      f_rule_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("rule_force", 10);
+      f_goal_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("goal_force", 10);
+      f_person_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("person_force", 10);
+      f_total_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("total_force", 10);
+
+      people_sub_ = private_nh.subscribe("people", 10, RRTDMPPlanner::peopleCallback);
 
       tf_ = tf;
       costmap_ros_ = costmap_ros;
@@ -232,15 +249,19 @@ namespace rrtdmp_planner {
     m2.getRPY(roll2, pitch2, yaw2);
 
     RRTDMPPlanner::vertex_t qInit = {0, {current_pose_.pose.position.x/(costmap_ -> getResolution()),
-                                      current_pose_.pose.position.y/(costmap_ -> getResolution()),
-                                                   yaw1}, 0, {0, 0}};
+                                         current_pose_.pose.position.y/(costmap_ -> getResolution()),
+                                         yaw1}, 0, {0, 0}};
     RRTDMPPlanner::vertex_t qGoal = {0, {transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.x/(costmap_ -> getResolution()),
-                                      transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.y/(costmap_ -> getResolution()),
-                                                   yaw2}, 0, {0, 0}};
+                                         transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.y/(costmap_ -> getResolution()),
+                                         yaw2}, 0, {0, 0}};
 
-    path_and_cmd_ = RRTDMPPlanner::rrt(qInit, qGoal);
+    RRTDMPPlanner::ros_cmd_t path_and_cmd;
 
-    ROS_INFO("Got path and velocity commands");
+    path_and_cmd = RRTDMPPlanner::rrt(qInit, qGoal);
+    if(path_and_cmd.cmd.size() > 0){
+      path_and_cmd_ = path_and_cmd;
+      ROS_INFO("Got path and velocity commands");
+    }
 
     base_local_planner::publishPlan(path_and_cmd_.path, l_plan_pub_);
     base_local_planner::publishPlan(transformed_plan, g_plan_pub_);
@@ -250,7 +271,10 @@ namespace rrtdmp_planner {
     return true;
   }
 
-
+/********************************************************************************************************************/
+  RRTDMPPlanner::~RRTDMPPlanner(){ // clean up stuff
+    delete &people_;
+  }
 
   // Private functions //
 
@@ -292,8 +316,10 @@ namespace rrtdmp_planner {
 
       current_time = ros::WallTime::now();
       if(path_and_cmd_.cmd.size() > 0 && (current_time.toSec() - previous_time.toSec()) >= time_step_){
-        ROS_INFO("TIME PASSED: %f", (current_time - previous_time).toSec());
+        //ROS_INFO("TIME PASSED: %f", (current_time - previous_time).toSec());
         cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+        cmd_prev_ = path_and_cmd_.cmd[0];
+        //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
         path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
         previous_time = ros::WallTime::now();
       }
@@ -306,12 +332,13 @@ namespace rrtdmp_planner {
       }
 
       RRTDMPPlanner::localCostmap();
+      RRTDMPPlanner::socialForceModel(qGoal); // call on dynamic motion primitive selector
 
       qRand = RRTDMPPlanner::sampling(l_cm_pose_x_ + l_cm_width_, l_cm_pose_y_ + l_cm_height_,
                                    l_cm_pose_x_, l_cm_pose_y_);
 
       if(RRTDMPPlanner::collisionTest(qRand, l_cm_obs_, robot_radius_) > 0){
-        ROS_INFO("Invalid Random Configuration");
+        //ROS_INFO("Invalid Random Configuration");
         continue;
       }
 
@@ -324,11 +351,11 @@ namespace rrtdmp_planner {
         cntID = branch.back().id;
       }
       else{
-        ROS_INFO("Failed to Form Valid Branch");
+        //ROS_INFO("Failed to Form Valid Branch");
         continue;
       }
 
-      ROS_INFO("Added Branch to Tree");
+      //ROS_INFO("Added Branch to Tree");
       tree_.insert(tree_.end(), branch.begin(), branch.end()); // double check later
 
       for(int i=0; i<branch.size(); i++){
@@ -410,13 +437,13 @@ namespace rrtdmp_planner {
       }
     }
 
-    ROS_INFO("Number of Obstacles in Local Costmap: %d", int(l_cm_obs_.size()));
+    //ROS_INFO("Number of Obstacles in Local Costmap: %d", int(l_cm_obs_.size()));
 
     motion_primitive_array_ = motion_primitive_array_const_;
 
-    for(int i=0; i<motion_primitive_array_.size(); i++){ // convert from m/s to cell/s
-      motion_primitive_array_[i].v = motion_primitive_array_[i].v/l_cm_resolution_;
-    }
+//    for(int i=0; i<motion_primitive_array_.size(); i++){ // convert from m/s to cell/s
+//      motion_primitive_array_[i].v = motion_primitive_array_[i].v/l_cm_resolution_;
+//    }
   }
 /********************************************************************************************************************/
   bool RRTDMPPlanner::collisionTest(RRTDMPPlanner::vertex_t q, std::vector<RRTDMPPlanner::obstacle_t> obs, double radius){
@@ -590,17 +617,21 @@ namespace rrtdmp_planner {
     ros::WallTime current_time, previous_time, initial_time;
     if(path_and_cmd_.cmd.size() > 0){
       cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+      cmd_prev_ = path_and_cmd_.cmd[0];
+      //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
       path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
     }
     else{
       geometry_msgs::Twist stop;
-      stop.linear.x = 0.0;
-      stop.linear.y = 0.0;
-      stop.linear.z = 0.0;
-      stop.angular.x = 0.0;
-      stop.angular.y = 0.0;
-      stop.angular.z = 0.0;
-      cmd_vel_pub_.publish(stop);
+      for(int i=0; i<stop_loops_; i++){ // produce a set of motion commands to create a smooth stop for the robot
+        stop.linear.x = cmd_prev_.linear.x - cmd_prev_.linear.x/(stop_loops_-i);
+        stop.linear.y = cmd_prev_.linear.y - cmd_prev_.linear.y/(stop_loops_-i);
+        stop.linear.z = cmd_prev_.linear.z - cmd_prev_.linear.z/(stop_loops_-i);
+        stop.angular.x = cmd_prev_.angular.x - cmd_prev_.angular.x/(stop_loops_-i);
+        stop.angular.y = cmd_prev_.angular.y - cmd_prev_.angular.y/(stop_loops_-i);
+        stop.angular.z = cmd_prev_.angular.z - cmd_prev_.angular.z/(stop_loops_-i);
+        path_and_cmd_.cmd.push_back(stop);
+      }
     }
     initial_time = ros::WallTime::now();
     previous_time = ros::WallTime::now();
@@ -608,13 +639,333 @@ namespace rrtdmp_planner {
       current_time = ros::WallTime::now();
       if((current_time.toSec() - previous_time.toSec()) >= time_step_){
         cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+        cmd_prev_ = path_and_cmd_.cmd[0];
+        //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
         path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
-        ROS_INFO("TIME PASSED: %f", (current_time.toSec() - previous_time.toSec()));
+        //ROS_INFO("TIME PASSED: %f", (current_time.toSec() - previous_time.toSec()));
         previous_time = ros::WallTime::now();
       }
       if(double(current_time.toSec() - initial_time.toSec()) >= double(1/controller_frequency_)){
         break;
       }
     }
+  }
+
+
+    // DMP Functions //
+
+  /********************************************************************************************************************/
+  void RRTDMPPlanner::socialForceModel(RRTDMPPlanner::vertex_t Goal){
+    RRTDMPPlanner::force_t f_rule;
+    RRTDMPPlanner::force_t f_goal;
+    RRTDMPPlanner::force_t f_person;
+    RRTDMPPlanner::force_t force;
+    double force_x;
+    double force_y;
+    double v_norm;
+    double vth_norm;
+    double v_max;
+    double v_min;
+    double vth_max;
+    double vth_min;
+
+    f_rule = ruleForce();
+    f_goal = goalForce(Goal);
+    f_person = personForce();
+    //ROS_INFO("f_rule: %f, f_goal: %f, f_person: %f", f_rule.magnitude, f_goal.magnitude, f_person.magnitude);
+    //ROS_INFO("th_rule: %f, th_goal: %f, th_person: %f", f_rule.angle, f_goal.angle, f_person.angle);
+    force_x = (rule_weight_*f_rule.magnitude*cos(f_rule.angle) +
+               goal_weight_*f_goal.magnitude*cos(f_goal.angle) +
+               person_weight_*f_person.magnitude*cos(f_person.angle))/3;
+    force_y = (rule_weight_*f_rule.magnitude*sin(f_rule.angle) +
+               goal_weight_*f_goal.magnitude*sin(f_goal.angle) +
+               person_weight_*f_person.magnitude*sin(f_person.angle))/3;
+
+    //------------ only used for publishing pose ------------//
+    if(! costmap_ros_ -> getRobotPose(current_pose_)){
+      ROS_ERROR("Could not get robot pose");
+    }
+    tf::Quaternion q(current_pose_.pose.orientation.x,
+                     current_pose_.pose.orientation.y,
+                     current_pose_.pose.orientation.z,
+                     current_pose_.pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    force.magnitude = sqrt(force_x*force_x + force_y*force_y);
+    force.angle = atan2(force_y,force_x);
+    ///////////////////////////////////////////////////////////
+
+    v_norm = (linear_velocity_max_-linear_velocity_min_)*force_x+linear_velocity_min_; // normalize to v range
+    //ROS_INFO("v_norm: %f", v_norm);
+    if(v_norm == linear_velocity_max_){
+      v_max = v_norm;
+      v_min = v_norm - (linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+    }
+    else if(v_norm == -linear_velocity_max_){
+      v_min = v_norm;
+      v_max = v_norm + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+    }
+    else{
+      v_max = v_norm + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+      v_min = v_norm - 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+    }
+
+    vth_norm = (angular_velocity_max_-angular_velocity_min_)*force_y+angular_velocity_min_; // normalize to vth range
+    //ROS_INFO("vth_norm: %f", vth_norm);
+    if(vth_norm == angular_velocity_max_){
+      vth_max = vth_norm;
+      vth_min = vth_norm - (angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+    }
+    else if(v_norm == -angular_velocity_max_){
+      vth_min = vth_norm;
+      vth_max = vth_norm + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+    }
+    else{
+      vth_max = vth_norm + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+      vth_min = vth_norm - 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+    }
+
+    // Start choosing MP Array
+    motion_primitive_array_const_.clear(); // reset the MP Array
+
+    RRTDMPPlanner::velocity_t motion_primitive = {0, 0};
+    for(int i=0; i<motion_primitive_resolution_; i++){
+      for(int j=0; j<motion_primitive_resolution_; j++){
+        motion_primitive.v = ((i+1)*((v_max - v_min)/(motion_primitive_resolution_))
+                              + v_min)/l_cm_resolution_;
+            //(i*((v_max - v_min)/(motion_primitive_resolution_ - 1))
+            //+ v_min)/l_cm_resolution_;  // will make identical motion primitives if max = min
+        motion_primitive.vth = ((j+1)*((vth_max - vth_min)/(motion_primitive_resolution_))
+                                + vth_min);
+            //(j*((vth_max - vth_min)/(motion_primitive_resolution_ - 1))
+            //+ vth_min); // will make identical motion primitives if max = min
+        motion_primitive_array_const_.push_back(motion_primitive);
+        //ROS_INFO("MP: [%f, %f]", motion_primitive.v, motion_primitive.vth);
+      }
+    }
+
+    geometry_msgs::PoseStamped pose; // stuff for visualizing the force
+    pose.pose.position.x = current_pose_.pose.position.x;
+    pose.pose.position.y = current_pose_.pose.position.y;
+    pose.pose.position.z = 0.0;
+    geometry_msgs::Quaternion quaternion;
+    double angle;
+    angle = force.angle + yaw;
+    quaternion = tf::createQuaternionMsgFromYaw(angle);
+    pose.pose.orientation = quaternion;
+    pose.header.stamp = ros::Time::now();
+    pose.header.frame_id = "/map";
+
+    f_total_pub_.publish(pose);
+
+  }
+
+  /********************************************************************************************************************/
+  RRTDMPPlanner::force_t RRTDMPPlanner::ruleForce(){
+    RRTDMPPlanner::force_t force;
+    std::vector<RRTDMPPlanner::force_t> force_array;
+    double force_x = 0.0;
+    double force_y = 0.0;
+
+    if(! costmap_ros_ -> getRobotPose(current_pose_)){
+      ROS_ERROR("Could not get robot pose");
+      force.magnitude = 0.0;
+      force.angle = 0.0;
+      return force;
+    }
+    tf::Quaternion q(current_pose_.pose.orientation.x,
+                     current_pose_.pose.orientation.y,
+                     current_pose_.pose.orientation.z,
+                     current_pose_.pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    double rob_x = current_pose_.pose.position.x/l_cm_resolution_;
+    double rob_y = current_pose_.pose.position.y/l_cm_resolution_;
+
+    double obs_x;
+    double obs_y;
+    double obs_th;
+    double obs_m;
+
+    for(int i=0; i<l_cm_obs_.size(); i++){
+      obs_x = l_cm_obs_[i].pose[0] - rob_x;
+      obs_y = l_cm_obs_[i].pose[1] - rob_y;
+      obs_m = sqrt(obs_x*obs_x + obs_y*obs_y);
+      obs_th = atan2(obs_y,obs_x) - yaw;
+      obs_y = obs_m*sin(obs_th);
+      obs_x = obs_m*cos(obs_th);
+
+      if(obs_y < 0 && obs_x > 0){ // obstacle is on the right
+        force.magnitude = 2/(1+exp(-1*(fabs(obs_m)-rule_offset_)/rule_scale_))-1; // adjusted sigmoid 1/(1+e^-x) // it's centered on 20 cells
+        force.angle = obs_th; // angle of the vector
+        force_array.push_back(force);
+      }
+    }
+
+    if(force_array.size() > 0){
+      for(int i=0; i<force_array.size(); i++){
+        force_x += force_array[i].magnitude*cos(force_array[i].angle);
+        force_y += force_array[i].magnitude*sin(force_array[i].angle);
+      }
+
+      force_x /= force_array.size();
+      force_y /= force_array.size();
+
+      force.magnitude = sqrt(force_x*force_x + force_y*force_y);
+      force.angle = atan2(force_y,force_x);
+    }
+    else{
+      force.magnitude = 0.0;
+      force.angle = 0.0;
+    }
+
+    geometry_msgs::PoseStamped pose; // stuff for visualizing the force
+    pose.pose.position.x = current_pose_.pose.position.x;
+    pose.pose.position.y = current_pose_.pose.position.y;
+    pose.pose.position.z = 0.0;
+    geometry_msgs::Quaternion quaternion;
+    double angle;
+    angle = force.angle + yaw;
+    quaternion = tf::createQuaternionMsgFromYaw(angle);
+    pose.pose.orientation = quaternion;
+    pose.header.stamp = ros::Time::now();
+    pose.header.frame_id = "/map";
+
+    f_rule_pub_.publish(pose);
+
+    return force;
+  }
+
+  /********************************************************************************************************************/
+  RRTDMPPlanner::force_t RRTDMPPlanner::goalForce(RRTDMPPlanner::vertex_t Goal){
+    RRTDMPPlanner::force_t force;
+
+    if(! costmap_ros_ -> getRobotPose(current_pose_)){
+      ROS_ERROR("Could not get robot pose");
+      force.magnitude = 0.0;
+      force.angle = 0.0;
+      return force;
+    }
+    tf::Quaternion q(current_pose_.pose.orientation.x,
+                     current_pose_.pose.orientation.y,
+                     current_pose_.pose.orientation.z,
+                     current_pose_.pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    double rob_x = current_pose_.pose.position.x/l_cm_resolution_;
+    double rob_y = current_pose_.pose.position.y/l_cm_resolution_;
+
+    double goal_x = Goal.pose[0] - rob_x;
+    double goal_y = Goal.pose[1] - rob_y;
+    double goal_m = sqrt(goal_x*goal_x + goal_y*goal_y);
+
+    force.magnitude = 2/(1+exp(-1*(fabs(goal_m)-goal_offset_)/goal_scale_))-1; // adjusted sigmoid 1/(1+e^-x) // it's centered on 0 cells -> reaches 1 at approximately 415 cells
+    force.angle = atan2(goal_y,goal_x) - yaw;
+
+    geometry_msgs::PoseStamped pose; // stuff for visualizing the force
+    pose.pose.position.x = current_pose_.pose.position.x;
+    pose.pose.position.y = current_pose_.pose.position.y;
+    pose.pose.position.z = 0.0;
+    geometry_msgs::Quaternion quaternion;
+    double angle;
+    angle = force.angle + yaw;
+    quaternion = tf::createQuaternionMsgFromYaw(angle);
+    pose.pose.orientation = quaternion;
+    pose.header.stamp = ros::Time::now();
+    pose.header.frame_id = "/map";
+
+    f_goal_pub_.publish(pose);
+
+    return force;
+  }
+
+  /********************************************************************************************************************/
+  RRTDMPPlanner::force_t RRTDMPPlanner::personForce(){
+    RRTDMPPlanner::force_t force;
+    std::vector<RRTDMPPlanner::force_t> force_array;
+    double force_x = 0.0;
+    double force_y = 0.0;
+
+    if(! costmap_ros_ -> getRobotPose(current_pose_)){
+      ROS_ERROR("Could not get robot pose");
+      force.magnitude = 0.0;
+      force.angle = 0.0;
+      return force;
+    }
+    tf::Quaternion q(current_pose_.pose.orientation.x,
+                     current_pose_.pose.orientation.y,
+                     current_pose_.pose.orientation.z,
+                     current_pose_.pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    double rob_x = current_pose_.pose.position.x/l_cm_resolution_;
+    double rob_y = current_pose_.pose.position.y/l_cm_resolution_;
+
+    double per_x;
+    double per_y;
+    double per_th;
+    double per_m;
+
+    //ROS_INFO("# people: %d", people_.poses.size());
+    //ROS_INFO("people pose: x:%f, y:%f", people_.poses[0].position.x, people_.poses[0].position.y);
+
+    if(people_.poses.size() > 0){
+      for(int i=0; i<people_.poses.size(); i++){
+        per_x = people_.poses[i].position.x/l_cm_resolution_;// - rob_x;
+        per_y = people_.poses[i].position.y/l_cm_resolution_;// - rob_y;
+        per_th = people_.poses[i].orientation.z;
+        per_m = sqrt(per_x*per_x + per_y*per_y);
+        //ROS_INFO("per_x:%f, per_y:%f, per_m:%f", per_x, per_y, per_m);
+
+        force.magnitude = 1/(1+exp(-1*(fabs(per_m)-person_offset_)/person_scale_))-1;// adjusted sigmoid 1/(1+e^-x) // it's centered on 10 cells -> reaches -1 at approximately -5.22 cells
+        force.magnitude = (1.5*force.magnitude + 0.5*((atan2((3.14-per_th)*(3.14-per_th),1)/1.5)-1))/2;// average the force from the person's proximity and heading
+        force.angle = atan2(per_y,per_x);// - yaw;
+        force_array.push_back(force);
+      }
+
+      //ROS_INFO("force_array.size() = %d", force_array.size());
+
+      for(int i=0; i<force_array.size(); i++){
+        force_x += force_array[i].magnitude*cos(force_array[i].angle);
+        force_y += force_array[i].magnitude*sin(force_array[i].angle);
+      }
+
+      force_x /= force_array.size();
+      force_y /= force_array.size();
+      force.magnitude = sqrt(force_x*force_x + force_y*force_y);
+      force.angle = atan2(force_y,force_x) + force.magnitude*0.785; // tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg
+    }
+    else{
+      ROS_INFO("No People Detected");
+      force.magnitude = 0.0;
+      force.angle = 0.0;
+    }
+
+    geometry_msgs::PoseStamped pose; // stuff for visualizing the force
+    pose.pose.position.x = current_pose_.pose.position.x;
+    pose.pose.position.y = current_pose_.pose.position.y;
+    pose.pose.position.z = 0.0;
+    geometry_msgs::Quaternion quaternion;
+    double angle;
+    angle = force.angle + yaw;
+    quaternion = tf::createQuaternionMsgFromYaw(angle);
+    pose.pose.orientation = quaternion;
+    pose.header.stamp = ros::Time::now();
+    pose.header.frame_id = "/map";
+
+    f_person_pub_.publish(pose);
+
+    return force;
+  }
+  void RRTDMPPlanner::peopleCallback(const geometry_msgs::PoseArray& data){
+    people_ = data;
   }
 }

@@ -1,4 +1,4 @@
-<library path="lib/librrt_planner">
+<library path="lib/librrtdmp_planner">
   <class name="rrtdmp_planner/RRTDMPPlanner" type="rrtdmp_planner::RRTDMPPlanner" base_class_type="nav_core::BaseLocalPlanner">
     <description>
       An implementation of an RRT based local planner utilizing dynamic motion primitives.

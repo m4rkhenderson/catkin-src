@@ -15,7 +15,10 @@
   <node pkg="robot_odometry" type="abot_odom" name="abot_odom"/>
 
   <node pkg="serial_abot" type="serial" name="serial" output="screen" required="true"/>
-  <node pkg="serial_abot" type="serial_commands" name="serial_commands"/>
+  <node pkg="serial_abot" type="serial_commands" name="serial_commands">
+    <param name="vmod" value="0.2"/>
+    <param name="vthmod" value="0.1"/>
+  </node>
 
   <!--node pkg="rplidar_ros"  type="rplidarNode" name="rplidarNode">
     <param name="serial_port"         type="string" value="/dev/ttyUSB0"/>  
@@ -26,7 +29,7 @@
     <param name="scan_mode"           type="string" value="Standard"/>
   </node-->
 
-  <node pkg="rviz" type="rviz" name="rviz"/>
+  <!--node pkg="rviz" type="rviz" name="rviz"/-->
     
   <param name="use_sim_time" value="false"/>
   <!--node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">

@@ -10,6 +10,8 @@ double vth = 0.0;
 double v_p = 0.0;
 double vth_p = 0.0;
 double vdf = 0.0;
+double vmod = 0.2;
+double vthmod = 0.1;
 
 double vel = 0.0;
 double velth = 0.0;
@@ -45,6 +47,8 @@ int DR = 0;
 bool state = 0;
 int count = 0;
 
+std::string nn;
+
 void moveCallback(const geometry_msgs::Twist& cmd){
     v = cmd.linear.x;
     vth = cmd.angular.z;
@@ -58,6 +62,12 @@ void odomCallback(const nav_msgs::Odometry& odom){
 int main (int argc, char** argv){
     ros::init(argc, argv, "serial_commands");
     ros::NodeHandle n;
+
+    nn = ros::this_node::getName();
+
+    n.param(nn + "/vmod", vmod, 0.2);
+    n.param(nn + "/vthmod", vthmod, 0.1);
+    //n.param<std::string>("vel_topic", vel_topic, "cmd_vel");
 
     ros::Publisher write_pub = n.advertise<std_msgs::String>("write", 100);
     ros::Subscriber move_sub = n.subscribe("cmd_vel", 100, moveCallback);
@@ -78,13 +88,13 @@ int main (int argc, char** argv){
         derivativeL = errorL - errorL_p;
         //integralL = integralL + errorL;
         errorL_p = errorL;
-        cL = cL + KPL[MODE]*errorL + KDL[MODE]*derivativeL;// + KIL*integralL;
+        cL = v*vmod + KPL[MODE]*errorL + KDL[MODE]*derivativeL;// + KIL*integralL; // v was cL
 
         errorA = vth - velth;
         derivativeA = errorA - errorA_p;
         //integralA = integralA + errorA;
         errorA_p = errorA;
-        cA = cA + KPA[MODE]*errorA + KDA[MODE]*derivativeA;// + KIA*integralA;
+        cA = vth*vthmod + KPA[MODE]*errorA + KDA[MODE]*derivativeA;// + KIA*integralA; // vth was cA
 
 //        if(cA != 0.0){
 //          cR = cL/cA;

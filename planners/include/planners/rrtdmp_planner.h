@@ -9,6 +9,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <base_local_planner/odometry_helper_ros.h>
 #include <base_local_planner/local_planner_util.h>
@@ -31,6 +32,8 @@ namespace rrtdmp_planner{
 
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& plan);
 
+      ~RRTDMPPlanner();
+
       // define RRT data structures
       struct vertex_t{
         int id;
@@ -49,6 +52,10 @@ namespace rrtdmp_planner{
       struct ros_cmd_t{
         std::vector<geometry_msgs::PoseStamped> path;
         std::vector<geometry_msgs::Twist> cmd;
+      };
+      struct force_t{
+        double magnitude;
+        double angle;
       };
 
     private:
@@ -111,6 +118,32 @@ namespace rrtdmp_planner{
       std::vector<vertex_t> motionPrimitives(vertex_t q, std::vector<RRTDMPPlanner::obstacle_t> obs, int cntID, int nSteps, double tStep, std::vector<velocity_t> mpArray, double radius);
       void velocityManager();
 
+      // define private Dynamic Motion Primitive variables
+      ros::Subscriber people_sub_;
+      ros::Publisher f_rule_pub_;
+      ros::Publisher f_goal_pub_;
+      ros::Publisher f_person_pub_;
+      ros::Publisher f_total_pub_;
+      static geometry_msgs::PoseArray people_;
+      double rule_offset_;
+      double goal_offset_;
+      double person_offset_;
+      double rule_scale_;
+      double goal_scale_;
+      double person_scale_;
+      double rule_weight_;
+      double goal_weight_;
+      double person_weight_;
+      double mp_range_scale_;
+      int stop_loops_;
+      geometry_msgs::Twist cmd_prev_;
+
+      // define Dynamic Motion Primitive private member functions
+      void socialForceModel(vertex_t Goal);
+      force_t ruleForce();
+      force_t goalForce(vertex_t Goal);
+      force_t personForce();
+      static void peopleCallback(const geometry_msgs::PoseArray& data);
   };
 };
 

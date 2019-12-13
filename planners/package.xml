@@ -100,5 +100,6 @@
   <export>
     <!-- Other tools can request additional information be placed here -->
     <nav_core plugin="${prefix}/rlp_plugin.xml" />
+    <nav_core plugin="${prefix}/rdmplp_plugin.xml"/>
   </export>
 </package>

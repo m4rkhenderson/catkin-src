@@ -3,6 +3,11 @@
   <param name="use_sim_time" value="false"/>
 
   <remap from="scan" to="base_scan"/>
+  <node pkg="planners" type="clear_scan" name="clear_scan">
+    <param name="laser_frame_id" value="laser"/>
+    <param name="reduction_factor" value="0.1"/>
+    <remap from="base_scan" to="scan_filtered"/>
+  </node>
 
   <arg name="model"/>
   <arg name="gui" default="False"/>
@@ -23,10 +28,26 @@
     <param name="scan_mode"           type="string" value="Standard"/>
   </node>
 
-  <node pkg="serial_abot" type="serial" name="serial" required="true"/>
-  <node pkg="serial_abot" type="serial_commands" name="serial_commands" output="screen"/>
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+    <rosparam command="load" file="$(find robot_navigation)/launch/abot/laser_filter.yaml"/>
+    <remap from="scan" to="base_scan"/>
+  </node>
 
-  <node pkg="amcl" type="amcl" name="amcl">
+  <node pkg="serial_abot" type="serial" name="serial" required="true"/>
+  <node pkg="serial_abot" type="serial_commands" name="serial_commands">
+    <param name="vmod" value="0.2"/>
+    <param name="vthmod" value="0.2"/>
+    <remap from="cmd_vel" to="cmd_vel_0"/>
+  </node>
+
+  <node pkg="serial_abot" type="wireless_communication" name="wireless_communication" output="screen">
+    <param name="people_num" value="2"/>
+    <param name="mirror_x" value="1"/>
+    <param name="mirror_y" value="1"/>
+    <param name="swap_axes" value="false"/>
+  </node>
+
+  <!--node pkg="amcl" type="amcl" name="amcl">
     <param name="use_map_topic" value="true"/>
     <param name="base_frame_id" value="base_footprint"/>
     <param name="tf_broadcast" value="true"/>
@@ -35,24 +56,23 @@
     <param name="odom_alpha2" value="0.2"/>
     <param name="odom_alpha3" value="0.2"/>
     <param name="odom_alpha4" value="0.2"/>
-  </node>
+  </node-->
 
-  <node pkg="move_base" type="move_base" name="move_base" output="screen">
+  <node pkg="move_base" type="move_base" name="move_base">
     <rosparam file="$(find robot_navigation)/launch/abot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
     <rosparam file="$(find robot_navigation)/launch/abot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
     <rosparam file="$(find robot_navigation)/launch/abot/local_costmap_params.yaml" command="load"/>
     <rosparam file="$(find robot_navigation)/launch/abot/global_costmap_params.yaml" command="load"/>
-    <rosparam file="$(find robot_navigation)/launch/abot/base_local_planner_params.yaml" command="load"/>
-    <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS"/>
+    <rosparam file="$(find robot_navigation)/launch/abot/rrtdmp_local_planner_params.yaml" command="load"/>
+    <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
     <param name="recovery_behavior_enabled" value="false"/>
-    <param name="controller_frequency" value="10.0"/>
-    <param name="use_dijkstra" value="false"/>
-    <param name="visualize_potential" value="true"/>
+    <remap from="move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_0"/>
+    <remap from="move_base/RRTDMPPlanner/people" to="people"/>
   </node>
 
-  <node pkg="map_server" name="map_server" type="map_server" args="$(find robot_navigation)/maps/fsde-firstfloor-03.pgm 0.050000"/>
+  <!--node pkg="map_server" name="map_server" type="map_server" args="$(find robot_navigation)/maps/fsde-firstfloor-03.pgm 0.050000"/-->
 
-  <!--node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
     <param name="base_frame" value="base_footprint"/>
     <param name="map_frame" value="map"/>
     <param name="odom_frame" value="odom"/>
@@ -61,7 +81,7 @@
     <param name="xmax" value="50.0"/>
     <param name="ymax" value="50.0"/>
     <param name="temporalUpdate" value="1.0"/>
-  </node-->
+  </node>
 
   <node pkg="rviz" type="rviz" name="rviz"/>
 </launch>

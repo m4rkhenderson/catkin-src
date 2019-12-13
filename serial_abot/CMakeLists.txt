@@ -153,6 +153,9 @@ add_executable(serial_commands src/serial_commands.cpp)
 target_link_libraries(serial_commands ${catkin_LIBRARIES})
 add_dependencies(serial_commands serial_abot_generate_messages_cpp)
 
+add_executable(wireless_communication src/wireless_communication.cpp)
+target_link_libraries(wireless_communication ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
