@@ -25,5 +25,9 @@ RRTDMPPlanner:
   rule_weight: 1.0
   goal_weight: 1.0
   person_weight: 1.0
+  avoid_ang: 0.5
+  p_dist_weight: 1.5
+  p_ang_weight: 0.5
+  tilt_bias: 0.785
   mp_range_scale: 0.05 #0.05 # higher values are more likely to produce valid paths, but lower values better enforce rules
   stop_loops: 10

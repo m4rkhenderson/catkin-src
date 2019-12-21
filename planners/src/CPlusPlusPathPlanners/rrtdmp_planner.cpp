@@ -1,4 +1,4 @@
-﻿#include <ros/console.h>
+#include <ros/console.h>
 #include <planners/rrtdmp_planner.h>
 #include <pluginlib/class_list_macros.h>
 #include <base_local_planner/goal_functions.h>
@@ -65,6 +65,10 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       private_nh.param("rule_weight", rule_weight_, 1.0);
       private_nh.param("goal_weight", goal_weight_, 1.0);
       private_nh.param("person_weight", person_weight_, 1.0);
+      private_nh.param("avoid_ang", avoid_ang_, 0.5);
+      private_nh.param("p_dist_weight", p_dist_weight_, 1.5);
+      private_nh.param("p_ang_weight", p_ang_weight_, 0.5);
+      private_nh.param("tilt_bias", tilt_bias_, 0.785);
       private_nh.param("mp_range_scale", mp_range_scale_, 0.125);
       private_nh.param("stop_loops", stop_loops_, 10);
 
@@ -255,13 +259,8 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
                                          transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.y/(costmap_ -> getResolution()),
                                          yaw2}, 0, {0, 0}};
 
-    RRTDMPPlanner::ros_cmd_t path_and_cmd;
-
-    path_and_cmd = RRTDMPPlanner::rrt(qInit, qGoal);
-    if(path_and_cmd.cmd.size() > 0){
-      path_and_cmd_ = path_and_cmd;
-      ROS_INFO("Got path and velocity commands");
-    }
+    path_and_cmd_ = RRTDMPPlanner::rrt(qInit, qGoal);
+    ROS_INFO("Got path and velocity commands");
 
     base_local_planner::publishPlan(path_and_cmd_.path, l_plan_pub_);
     base_local_planner::publishPlan(transformed_plan, g_plan_pub_);
@@ -632,6 +631,10 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
         stop.angular.z = cmd_prev_.angular.z - cmd_prev_.angular.z/(stop_loops_-i);
         path_and_cmd_.cmd.push_back(stop);
       }
+      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+      cmd_prev_ = path_and_cmd_.cmd[0];
+      //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
+      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
     }
     initial_time = ros::WallTime::now();
     previous_time = ros::WallTime::now();
@@ -664,22 +667,30 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     double force_y;
     double v_norm;
     double vth_norm;
-    double v_max;
-    double v_min;
-    double vth_max;
-    double vth_min;
+    double v_st_dev;
+    v_st_dev = 2*linear_velocity_max_/motion_primitive_resolution_;
+    double vth_st_dev;
+    vth_st_dev = 2*angular_velocity_max_/motion_primitive_resolution_;
 
     f_rule = ruleForce();
     f_goal = goalForce(Goal);
     f_person = personForce();
-    //ROS_INFO("f_rule: %f, f_goal: %f, f_person: %f", f_rule.magnitude, f_goal.magnitude, f_person.magnitude);
+    ROS_INFO("f_rule: %f, f_goal: %f, f_person: %f", f_rule.magnitude, f_goal.magnitude, f_person.magnitude);
     //ROS_INFO("th_rule: %f, th_goal: %f, th_person: %f", f_rule.angle, f_goal.angle, f_person.angle);
-    force_x = (rule_weight_*f_rule.magnitude*cos(f_rule.angle) +
-               goal_weight_*f_goal.magnitude*cos(f_goal.angle) +
-               person_weight_*f_person.magnitude*cos(f_person.angle))/3;
-    force_y = (rule_weight_*f_rule.magnitude*sin(f_rule.angle) +
-               goal_weight_*f_goal.magnitude*sin(f_goal.angle) +
-               person_weight_*f_person.magnitude*sin(f_person.angle))/3;
+    force_x = (rule_weight_*f_rule.magnitude*cos(f_rule.angle) *
+               (1-person_weight_*f_person.magnitude) + //as the person force gets larger, the rule force is less important
+               goal_weight_*f_goal.magnitude*cos(f_goal.angle) *
+               (1-0*person_weight_*f_person.magnitude) +
+               person_weight_*f_person.magnitude*cos(f_person.angle) *
+               (1+person_weight_*f_person.magnitude))/3; //as the person force gets larger, the person force gets more important
+    force_y = (rule_weight_*f_rule.magnitude*sin(f_rule.angle) *
+               (1-person_weight_*f_person.magnitude) +
+               goal_weight_*f_goal.magnitude*sin(f_goal.angle) *
+               (1-0*person_weight_*f_person.magnitude) +
+               person_weight_*f_person.magnitude*sin(f_person.angle) *
+               (1+person_weight_*f_person.magnitude))/3;
+
+    ROS_INFO("force_x: %f, force_y: %f", force_x, force_y);
 
     //------------ only used for publishing pose ------------//
     if(! costmap_ros_ -> getRobotPose(current_pose_)){
@@ -697,48 +708,66 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     force.angle = atan2(force_y,force_x);
     ///////////////////////////////////////////////////////////
 
-    v_norm = (linear_velocity_max_-linear_velocity_min_)*force_x+linear_velocity_min_; // normalize to v range
+    v_norm = linear_velocity_max_*force_x; // normalize to v range
     //ROS_INFO("v_norm: %f", v_norm);
-    if(v_norm == linear_velocity_max_){
-      v_max = v_norm;
-      v_min = v_norm - (linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+    if(v_norm > linear_velocity_max_){
+      v_norm = linear_velocity_max_;
+//      v_min = linear_velocity_max_ - 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
     }
-    else if(v_norm == -linear_velocity_max_){
-      v_min = v_norm;
-      v_max = v_norm + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+    else if(v_norm < -linear_velocity_max_){
+      v_norm = -linear_velocity_max_;
+//      v_max = -linear_velocity_max_ + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
     }
-    else{
-      v_max = v_norm + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
-      v_min = v_norm - 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
-    }
+//    else{
+//      v_max = v_norm + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+//      v_min = v_norm - 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
+//    }
 
-    vth_norm = (angular_velocity_max_-angular_velocity_min_)*force_y+angular_velocity_min_; // normalize to vth range
+    vth_norm = angular_velocity_max_*force_y; // normalize to vth range
     //ROS_INFO("vth_norm: %f", vth_norm);
-    if(vth_norm == angular_velocity_max_){
-      vth_max = vth_norm;
-      vth_min = vth_norm - (angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+    if(vth_norm > angular_velocity_max_){
+      vth_norm = angular_velocity_max_;
+//      vth_min = angular_velocity_max_ - 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
     }
-    else if(v_norm == -angular_velocity_max_){
-      vth_min = vth_norm;
-      vth_max = vth_norm + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+    else if(vth_norm < -angular_velocity_max_){
+      vth_norm = -angular_velocity_max_;
+//      vth_max = -angular_velocity_max_ + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
     }
-    else{
-      vth_max = vth_norm + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
-      vth_min = vth_norm - 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
-    }
+//    else{
+//      vth_max = vth_norm + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+//      vth_min = vth_norm - 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
+//    }
 
     // Start choosing MP Array
     motion_primitive_array_const_.clear(); // reset the MP Array
 
     RRTDMPPlanner::velocity_t motion_primitive = {0, 0};
-    for(int i=0; i<motion_primitive_resolution_; i++){
-      for(int j=0; j<motion_primitive_resolution_; j++){
-        motion_primitive.v = ((i+1)*((v_max - v_min)/(motion_primitive_resolution_))
-                              + v_min)/l_cm_resolution_;
+    for(int i=0; i<motion_primitive_resolution_+1; i++){
+      motion_primitive.v = ((linear_velocity_max_*2.0)*(2.0*double(i)*v_st_dev-2.0*linear_velocity_max_)*(1.0/(v_st_dev*sqrt(2.0*3.14)))*
+                            exp(-0.5*pow(((2.0*double(i)*v_st_dev-2.0*linear_velocity_max_)/v_st_dev), 2))+v_norm)/l_cm_resolution_;
+      //ROS_INFO("v: %f", motion_primitive.v);
+      if(motion_primitive.v > linear_velocity_max_/l_cm_resolution_){
+        motion_primitive.v = linear_velocity_max_/l_cm_resolution_;
+      }
+      else if(motion_primitive.v < -linear_velocity_max_/l_cm_resolution_){
+        motion_primitive.v = -linear_velocity_max_/l_cm_resolution_;
+      }
+      for(int j=0; j<motion_primitive_resolution_+1; j++){
+            //((i+1)*((v_max - v_min)/(motion_primitive_resolution_))
+            //+ v_min)/l_cm_resolution_;
             //(i*((v_max - v_min)/(motion_primitive_resolution_ - 1))
             //+ v_min)/l_cm_resolution_;  // will make identical motion primitives if max = min
-        motion_primitive.vth = ((j+1)*((vth_max - vth_min)/(motion_primitive_resolution_))
-                                + vth_min);
+        motion_primitive.vth = ((angular_velocity_max_*2.0)*(2.0*double(j)*vth_st_dev-2.0*angular_velocity_max_)*(1.0/(vth_st_dev*sqrt(2.0*3.14)))*
+                                exp(-0.5*pow(((2.0*double(j)*vth_st_dev-2.0*angular_velocity_max_)/vth_st_dev), 2))+vth_norm);
+        //ROS_INFO("vth: %f", motion_primitive.vth);
+        if(motion_primitive.vth > angular_velocity_max_){
+          motion_primitive.vth = angular_velocity_max_;
+        }
+        else if(motion_primitive.vth < -angular_velocity_max_){
+          motion_primitive.vth = -angular_velocity_max_;
+        }
+            //((j+1)*((vth_max - vth_min)/(motion_primitive_resolution_))
+            //+ vth_min);
             //(j*((vth_max - vth_min)/(motion_primitive_resolution_ - 1))
             //+ vth_min); // will make identical motion primitives if max = min
         motion_primitive_array_const_.push_back(motion_primitive);
@@ -913,35 +942,102 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     double per_y;
     double per_th;
     double per_m;
+    double density;
 
     //ROS_INFO("# people: %d", people_.poses.size());
     //ROS_INFO("people pose: x:%f, y:%f", people_.poses[0].position.x, people_.poses[0].position.y);
+
+    if(people_.poses.size() > 1){ // calculate environment density based on human proximity to each other
+      double peri_x;
+      double perj_x;
+      double peri_y;
+      double perj_y;
+      double peri_m;
+      double perj_m;
+      for(int i=0; i<people_.poses.size(); i++){
+        for(int j=0; j<people_.poses.size(); j++){
+          if(i == j){
+            continue;
+          }
+          peri_x = people_.poses[i].position.x/l_cm_resolution_;
+          perj_x = people_.poses[j].position.x/l_cm_resolution_;
+          peri_y = people_.poses[i].position.y/l_cm_resolution_;
+          perj_y = people_.poses[j].position.y/l_cm_resolution_;
+//          peri_m = sqrt(peri_x*peri_x + peri_y*peri_y);
+//          perj_m = sqrt(perj_x*perj_x + perj_y*perj_y);
+          density += 1/(1+exp(((((fabs(perj_x-peri_x)/20)+(fabs(perj_y-peri_y)/20))/2)-0.5)/0.1)); // density is a sigmoid function of the difference in x and y of the people
+        }
+      }
+//      density /= people_.poses.size();
+//      ROS_INFO("Density: %f", density);
+      if(density < 1){
+        density = 1;
+      }
+    }
+    else{
+      density = 1;
+    }
 
     if(people_.poses.size() > 0){
       for(int i=0; i<people_.poses.size(); i++){
         per_x = people_.poses[i].position.x/l_cm_resolution_;// - rob_x;
         per_y = people_.poses[i].position.y/l_cm_resolution_;// - rob_y;
+        if(per_x < 0){ // ignore people behind the robot
+          continue;
+        }
+
         per_th = people_.poses[i].orientation.z;
         per_m = sqrt(per_x*per_x + per_y*per_y);
         //ROS_INFO("per_x:%f, per_y:%f, per_m:%f", per_x, per_y, per_m);
 
-        force.magnitude = 1/(1+exp(-1*(fabs(per_m)-person_offset_)/person_scale_))-1;// adjusted sigmoid 1/(1+e^-x) // it's centered on 10 cells -> reaches -1 at approximately -5.22 cells
-        force.magnitude = (1.5*force.magnitude + 0.5*((atan2((3.14-per_th)*(3.14-per_th),1)/1.5)-1))/2;// average the force from the person's proximity and heading
-        force.angle = atan2(per_y,per_x);// - yaw;
+        force.magnitude = 1/(1+exp(-1*(fabs(per_m)-person_offset_*density)/person_scale_))-1;// adjusted sigmoid 1/(1+e^-x) // offset is a function of the environment density <- maybe not
+        //force.magnitude = (p_dist_weight_*force.magnitude + p_ang_weight_*((atan2((3.14-per_th)*(3.14-per_th),1)/1.5)-1))/2;// average the force from the person's proximity and heading
+
+        force.angle = atan2(per_y,per_x);
+        if(force.angle < 1.57 && force.angle > -1.57){
+          force.angle = force.angle + -1*tilt_bias_*((1.25332/(0.5*sqrt(2*3.14)))*exp(-0.5*pow((force.angle-avoid_ang_)/0.5, 2)));// tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg // create a gradiant of effect using gaussian
+        }
+        //ROS_INFO("magnitude: %f", force.magnitude);
         force_array.push_back(force);
       }
 
       //ROS_INFO("force_array.size() = %d", force_array.size());
 
-      for(int i=0; i<force_array.size(); i++){
+      if(force_array.size() <= 0){ // a final check to see if the robot has ignored all people around it
+        force.magnitude = 0.0;
+        force.angle = 0.0;
+        return force;
+      }
+
+      for(int i=0; i<force_array.size(); i++){ // get sum of x and y forces
         force_x += force_array[i].magnitude*cos(force_array[i].angle);
         force_y += force_array[i].magnitude*sin(force_array[i].angle);
       }
 
-      force_x /= force_array.size();
-      force_y /= force_array.size();
+      if(fabs(force_x) > 0){ // if the force is not zero then produce an average force based on impact of each person
+        double force_x_sum = force_x;
+        double force_x_i;
+        force_x = 0;
+        for(int i=0; i<force_array.size(); i++){
+          force_x_i = force_array[i].magnitude*cos(force_array[i].angle);
+          force_x += (fabs(force_x_i)/force_x_i)*pow(force_x_i,2)/fabs(force_x_sum); // multiplied by the signage of the force
+        }
+      }
+      if(fabs(force_y) > 0){ // if the force is not zero then produce an average force based on impact of each person
+        double force_y_sum = force_y;
+        double force_y_i;
+        force_y = 0;
+        for(int i=0; i<force_array.size(); i++){
+          force_y_i = force_array[i].magnitude*sin(force_array[i].angle);
+          force_y += (fabs(force_y_i)/force_y_i)*pow(force_y_i,2)/fabs(force_y_sum); // multiplied by the signage of the force
+        }
+      }
+//      force_x /= force_array.size();
+//      force_y /= force_array.size();
+      //ROS_INFO("force_x: %f, force_y: %f", force_x, force_y);
+
       force.magnitude = sqrt(force_x*force_x + force_y*force_y);
-      force.angle = atan2(force_y,force_x) + force.magnitude*0.785; // tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg
+      force.angle = atan2(force_y,force_x);
     }
     else{
       ROS_INFO("No People Detected");

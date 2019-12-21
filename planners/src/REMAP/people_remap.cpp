@@ -61,7 +61,9 @@ int main(int argc, char **argv)
   geometry_msgs::Pose person;
 
   tf::TransformListener listener;
-  tf::StampedTransform transform_l;
+  tf::StampedTransform transform_l_1;
+  tf::StampedTransform transform_l_2;
+  tf::StampedTransform transform_l_3;
 
   static tf::TransformBroadcaster br;
   tf::Transform transform;
@@ -77,24 +79,67 @@ int main(int argc, char **argv)
 //    }
 
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_1/odom"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_2/odom"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_3/odom"));
 
+
+    // get transform for robot_1
     try
     {
-      listener.lookupTransform("/robot_0/base_link", "/robot_1/base_link", ros::Time(0), transform_l);
+      listener.lookupTransform("/robot_0/base_link", "/robot_1/base_link", ros::Time(0), transform_l_1);
     }
     catch (tf::TransformException ex)
     {
       ROS_ERROR("%s",ex.what());
       ros::Duration(1.0).sleep();
     }
-
-    person.position.x = transform_l.getOrigin().x();
-    person.position.y = transform_l.getOrigin().y();
-    person.orientation.z = transform_l.getRotation().z();
-    person.orientation.w = transform_l.getRotation().w();
+    person.position.x = transform_l_1.getOrigin().x();
+    person.position.y = transform_l_1.getOrigin().y();
+    person.orientation.z = transform_l_1.getRotation().z();
+    person.orientation.w = transform_l_1.getRotation().w();
     ROS_INFO("x:%f, y%f, z:%f, w:%f", person.position.x, person.position.y, person.orientation.z, person.orientation.w);
 
     people.poses.push_back(person);
+
+
+    // get transform for robot_2
+    try
+    {
+      listener.lookupTransform("/robot_0/base_link", "/robot_2/base_link", ros::Time(0), transform_l_2);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+    person.position.x = transform_l_2.getOrigin().x();
+    person.position.y = transform_l_2.getOrigin().y();
+    person.orientation.z = transform_l_2.getRotation().z();
+    person.orientation.w = transform_l_2.getRotation().w();
+    ROS_INFO("x:%f, y%f, z:%f, w:%f", person.position.x, person.position.y, person.orientation.z, person.orientation.w);
+
+    people.poses.push_back(person);
+
+
+    // get transform for robot_3
+    try
+    {
+      listener.lookupTransform("/robot_0/base_link", "/robot_3/base_link", ros::Time(0), transform_l_3);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+    person.position.x = transform_l_3.getOrigin().x();
+    person.position.y = transform_l_3.getOrigin().y();
+    person.orientation.z = transform_l_3.getRotation().z();
+    person.orientation.w = transform_l_3.getRotation().w();
+    ROS_INFO("x:%f, y%f, z:%f, w:%f", person.position.x, person.position.y, person.orientation.z, person.orientation.w);
+
+    people.poses.push_back(person);
+
+
     people.header.frame_id = "/robot_0/base_link";
 
     people_pub.publish(people);

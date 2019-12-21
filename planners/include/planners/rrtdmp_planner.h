@@ -134,6 +134,10 @@ namespace rrtdmp_planner{
       double rule_weight_;
       double goal_weight_;
       double person_weight_;
+      double avoid_ang_;
+      double p_dist_weight_;
+      double p_ang_weight_;
+      double tilt_bias_;
       double mp_range_scale_;
       int stop_loops_;
       geometry_msgs::Twist cmd_prev_;
