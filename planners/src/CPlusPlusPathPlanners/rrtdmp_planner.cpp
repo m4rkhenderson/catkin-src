@@ -371,11 +371,20 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       tree_pub_.publish(points);
 
       for(int i=0; i<branch.size(); i++){
-        dX = branch[i].pose[0] - qGoal.pose[0];
-        dY = branch[i].pose[1] - qGoal.pose[1];
-        d = sqrt(dX*dX + dY*dY);
-        infD = d + -1*(path_tolerance_ + robot_radius_);
-        if(infD <= 0){
+        dX = 1; // set in case ifs fail
+        dY = 1;
+        if(qGoal.pose[0] >= l_cm_width_-l_cm_pose_x_ || qGoal.pose[0] <= -l_cm_pose_x_){
+          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_+robot_radius_);  // make the tolerance circle into something like an ellipsoid
+          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_/2+robot_radius_);
+        }
+        else if(qGoal.pose[1] >= l_cm_height_-l_cm_pose_y_ || qGoal.pose[1] <= -l_cm_pose_y_){
+          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_/2+robot_radius_);
+          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_+robot_radius_);
+        }
+
+//        d = sqrt(dX*dX + dY*dY);
+//        infD = d + -1*(path_tolerance_ + robot_radius_);
+        if(dX <= 0 && dY <= 0){
           path_found = true;
           path_and_cmd = RRTDMPPlanner::extractPath(branch[i], tree_, qInit);
           break;
