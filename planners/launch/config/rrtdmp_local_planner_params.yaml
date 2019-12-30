@@ -18,7 +18,7 @@ RRTDMPPlanner:
   velocity_topic: "robot_0/cmd_vel"
   rule_offset: 5.0
   goal_offset: 0.0
-  person_offset: 85.0 # the number of cells where force begins to be applied
+  person_offset: 110.0 # the number of cells where force begins to be applied
   rule_scale: 5.0
   goal_scale: 30.0
   person_scale: 30 # 0.5

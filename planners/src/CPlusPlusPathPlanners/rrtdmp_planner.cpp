@@ -187,11 +187,26 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       ROS_ERROR("Could not get costmap pointer");
     }
 
-    dX = current_pose_.pose.position.x - goal_pose_.pose.position.x;
-    dY = current_pose_.pose.position.y - goal_pose_.pose.position.y;
-    d = sqrt(dX*dX + dY*dY)/(costmap_ -> getResolution());
-    infD = d + -1*(goal_tolerance_ + robot_radius_);
-    if(infD <= 0){
+//    dX = current_pose_.pose.position.x - goal_pose_.pose.position.x;
+//    dY = current_pose_.pose.position.y - goal_pose_.pose.position.y;
+//    d = sqrt(dX*dX + dY*dY)/(costmap_ -> getResolution());
+//    infD = d + -1*(goal_tolerance_ + robot_radius_);
+    dX = 1; // set in case ifs fail
+    dY = 1;
+    if(goal_pose_.pose.position.x/l_cm_resolution_ >= l_cm_width_+l_cm_pose_x_-1 || goal_pose_.pose.position.x/l_cm_resolution_ <= l_cm_pose_x_+1){
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_+robot_radius_);  // make the tolerance circle into something like an ellipsoid
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
+    }
+    else if(goal_pose_.pose.position.y/l_cm_resolution_ >= l_cm_height_+l_cm_pose_y_-1 || goal_pose_.pose.position.y/l_cm_resolution_ <= l_cm_pose_y_+1){
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_+robot_radius_);
+    }
+    else{
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
+    }
+
+    if(dX <= 0 && dY <= 0){
       reached_goal_ = true;
       geometry_msgs::Twist cmd;
       cmd.linear.x = 0;
@@ -373,13 +388,17 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       for(int i=0; i<branch.size(); i++){
         dX = 1; // set in case ifs fail
         dY = 1;
-        if(qGoal.pose[0] >= l_cm_width_-l_cm_pose_x_ || qGoal.pose[0] <= -l_cm_pose_x_){
+        if(qGoal.pose[0] >= l_cm_width_+l_cm_pose_x_-1 || qGoal.pose[0] <= l_cm_pose_x_+1){
           dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_+robot_radius_);  // make the tolerance circle into something like an ellipsoid
           dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_/2+robot_radius_);
         }
-        else if(qGoal.pose[1] >= l_cm_height_-l_cm_pose_y_ || qGoal.pose[1] <= -l_cm_pose_y_){
+        else if(qGoal.pose[1] >= l_cm_height_+l_cm_pose_y_-1 || qGoal.pose[1] <= l_cm_pose_y_+1){
           dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_/2+robot_radius_);
           dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_+robot_radius_);
+        }
+        else{
+          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_/2+robot_radius_);
+          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_/2+robot_radius_);
         }
 
 //        d = sqrt(dX*dX + dY*dY);
@@ -951,7 +970,10 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     double per_y;
     double per_th;
     double per_m;
-    double density;
+    double density[people_.poses.size()];
+    for(int i=0; i<people_.poses.size(); i++){
+      density[i] = 1;
+    }
 
     //ROS_INFO("# people: %d", people_.poses.size());
     //ROS_INFO("people pose: x:%f, y:%f", people_.poses[0].position.x, people_.poses[0].position.y);
@@ -974,18 +996,16 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
           perj_y = people_.poses[j].position.y/l_cm_resolution_;
 //          peri_m = sqrt(peri_x*peri_x + peri_y*peri_y);
 //          perj_m = sqrt(perj_x*perj_x + perj_y*perj_y);
-          density += 1/(1+exp(((((fabs(perj_x-peri_x)/20)+(fabs(perj_y-peri_y)/20))/2)-0.5)/0.1)); // density is a sigmoid function of the difference in x and y of the people
+          density[i] += 1/(1+exp(((((fabs(perj_x-peri_x)/20)+(fabs(perj_y-peri_y)/20))/2)-0.5)/0.1)); // density is a sigmoid function of the difference in x and y of the people
+        }
+        if(density[i] < 1){
+          density[i] = 1;
         }
       }
 //      density /= people_.poses.size();
 //      ROS_INFO("Density: %f", density);
-      if(density < 1){
-        density = 1;
-      }
     }
-    else{
-      density = 1;
-    }
+
 
     if(people_.poses.size() > 0){
       for(int i=0; i<people_.poses.size(); i++){
@@ -999,12 +1019,12 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
         per_m = sqrt(per_x*per_x + per_y*per_y);
         //ROS_INFO("per_x:%f, per_y:%f, per_m:%f", per_x, per_y, per_m);
 
-        force.magnitude = 1/(1+exp(-1*(fabs(per_m)-person_offset_*density)/person_scale_))-1;// adjusted sigmoid 1/(1+e^-x) // offset is a function of the environment density <- maybe not
+        force.magnitude = 1/(1+exp(-1*(fabs(per_m)-person_offset_*density[i])/person_scale_))-1;// adjusted sigmoid 1/(1+e^-x) // offset is a function of the environment density <- maybe not
         //force.magnitude = (p_dist_weight_*force.magnitude + p_ang_weight_*((atan2((3.14-per_th)*(3.14-per_th),1)/1.5)-1))/2;// average the force from the person's proximity and heading
 
         force.angle = atan2(per_y,per_x);
         if(force.angle < 1.57 && force.angle > -1.57){
-          force.angle = force.angle + -1*tilt_bias_*((1.25332/(0.5*sqrt(2*3.14)))*exp(-0.5*pow((force.angle-avoid_ang_)/0.5, 2)));// tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg // create a gradiant of effect using gaussian
+          force.angle = force.angle + -1*tilt_bias_*((0.62666/(0.25*sqrt(2*3.14)))*exp(-0.5*pow((force.angle-avoid_ang_)/0.25, 2)));// tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg // create a gradiant of effect using gaussian
         }
         //ROS_INFO("magnitude: %f", force.magnitude);
         force_array.push_back(force);

@@ -29,8 +29,7 @@ int main(int argc, char **argv)
   nh.param(nn + "/swap_axes", s_a, false);
 
   ros::Publisher people_pub = nh.advertise<geometry_msgs::PoseArray>("people", 10);
-  people.header.frame_id = "odom";
-
+  people.header.frame_id = "base_footprint";
   try
   {
       ser.setPort("/dev/ttyACM0");
@@ -71,32 +70,32 @@ int main(int argc, char **argv)
       loc = ser.read(ser.available());
       if(loc.c_str()[0] == 112){
         ROS_INFO("Read: %c %d %d %d %d", char(loc.c_str()[0]), int(loc.c_str()[1]), int(loc.c_str()[2]), int(loc.c_str()[3]), int(loc.c_str()[4]));
-        //double magnitude;
-        //double angle;
+        double magnitude;
+        double angle;
         if(s_a == false){
-          person.position.x = m_x*(double(loc.c_str()[2])/10 - robot.position.x); // information is scaled to increase resolution
-          person.position.y = m_y*(double(loc.c_str()[3])/10 - robot.position.y); // get position differences to calculate vector magnitude
+          person.position.x = m_x*(robot.position.x - double(loc.c_str()[2])/10); // information is scaled to increase resolution
+          person.position.y = m_y*(robot.position.y - double(loc.c_str()[3])/10); // get position differences to calculate vector magnitude
         }
         else{
-          person.position.y = m_x*(double(loc.c_str()[2])/10 - robot.position.x); // information is scaled to increase resolution
-          person.position.x = m_y*(double(loc.c_str()[3])/10 - robot.position.y); // get position differences to calculate vector magnitude
+          person.position.y = m_x*(robot.position.x - double(loc.c_str()[2])/10); // information is scaled to increase resolution
+          person.position.x = m_y*(robot.position.y - double(loc.c_str()[3])/10); // get position differences to calculate vector magnitude
         }
         person.orientation.z = double(loc.c_str()[4])/10 - robot.orientation.z;
         person.orientation.w = 1; // might need to change
-        ROS_INFO("Person Position: %f, %f", person.position.x, person.position.y);
-        //magnitude = sqrt(person.position.x*person.position.x + person.position.y*person.position.y);
-        //angle = atan2(person.position.y,person.position.x);
-        //person.position.x = magnitude*cos(angle);// we need the position relative to the robot's frame
-        //person.position.y = magnitude*sin(angle);
+        //ROS_INFO("Person Position: %f, %f", person.position.x, person.position.y);
+        magnitude = sqrt(person.position.x*person.position.x + person.position.y*person.position.y);
+        angle = atan2(person.position.y,person.position.x) - robot.orientation.z;
+        person.position.x = magnitude*cos(angle);// we need the position relative to the robot's frame
+        person.position.y = magnitude*sin(angle);
 
         people.poses[int(loc.c_str()[1])-2] = person; // update the position for the given human id
         people_pub.publish(people);
       }
       else if(loc.c_str()[0] == 114){
         ROS_INFO("Read: %c %d %d %d %d", char(loc.c_str()[0]), int(loc.c_str()[1]), int(loc.c_str()[2]), int(loc.c_str()[3]), int(loc.c_str()[4]));
-        robot.position.x = float(loc.c_str()[2])/10; // information is scaled to increase resolution
-        robot.position.y = float(loc.c_str()[3])/10;
-        robot.orientation.z = float(loc.c_str()[4])/10;
+        robot.position.x = double(loc.c_str()[2])/10; // information is scaled to increase resolution
+        robot.position.y = double(loc.c_str()[3])/10;
+        robot.orientation.z = double(loc.c_str()[4])/10;
       }
     }
 

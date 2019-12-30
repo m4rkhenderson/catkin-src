@@ -42,7 +42,7 @@
 
   <node pkg="serial_abot" type="wireless_communication" name="wireless_communication" output="screen">
     <param name="people_num" value="2"/>
-    <param name="mirror_x" value="1"/>
+    <param name="mirror_x" value="-1"/>
     <param name="mirror_y" value="1"/>
     <param name="swap_axes" value="false"/>
   </node>
@@ -66,6 +66,7 @@
     <rosparam file="$(find robot_navigation)/launch/abot/rrtdmp_local_planner_params.yaml" command="load"/>
     <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
     <param name="recovery_behavior_enabled" value="false"/>
+    <param name="planner_frequency" value="1"/>
     <remap from="move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_0"/>
     <remap from="move_base/RRTDMPPlanner/people" to="people"/>
   </node>

@@ -218,7 +218,7 @@ int main(int argc, char** argv){
 
   tf::Vector3 position;
   for(int i=0; i<num_markers_; i++){
-    position = tf::Vector3(100, 100 + 2*i, 0);
+    position = tf::Vector3(0, 0 + 2*i, 0);
     makeWaypointMarker(position);
   }
 

@@ -30,6 +30,7 @@
     <node pkg="planners" type="waypoint_markers" name="waypoint_markers">
       <param name="num_markers" value="5"/>
       <param name="base_frame" value="/robot_0/base_footprint"/>
+      <param name="goal_tolerance" value="3.0"/>
     </node>
 
     <!--node pkg="planners" type="obstacle_distance" name="obstacle_distance" output="screen">
@@ -43,10 +44,10 @@
       <param name="odom_frame_id" value="robot_0/odom"/>
       <param name="tf_broadcast" value="true"/>
       <param name="odom_model_type" value="diff-corrected"/>
-      <param name="odom_alpha1" value="0.000001"/>
-      <param name="odom_alpha2" value="0.000001"/>
-      <param name="odom_alpha3" value="0.000001"/>
-      <param name="odom_alpha4" value="0.000001"/>
+      <param name="odom_alpha1" value="0.0001"/>
+      <param name="odom_alpha2" value="0.0001"/>
+      <param name="odom_alpha3" value="0.0001"/>
+      <param name="odom_alpha4" value="0.0001"/>
       <remap from="scan" to="base_scan"/>
       <remap from="static_map" to="/static_map"/>
       <remap from="map" to="/map"/>
@@ -66,42 +67,30 @@
   </group>
 
   <group ns="robot_1">
-    <!--node pkg="amcl" type="amcl" name="amcl">
-      <param name="use_map_topic" value="true"/>
-      <param name="base_frame_id" value="robot_1/base_footprint"/>
-      <param name="odom_frame_id" value="robot_1/odom"/>
-      <param name="tf_broadcast" value="true"/>
-      <param name="odom_model_type" value="diff-corrected"/>
-      <param name="odom_alpha1" value="0.0000000001"/>
-      <param name="odom_alpha2" value="0.0000000001"/>
-      <param name="odom_alpha3" value="0.0000000001"/>
-      <param name="odom_alpha4" value="0.0000000001"/>
-      <remap from="scan" to="base_scan"/>
-      <remap from="static_map" to="/static_map"/>
-      <remap from="map" to="/map"/>
-    </node-->
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
       <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="1.0"/>
-      <param name="obstacle_steps" value="180"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="360"/>
     </node>
   </group>
 
   <group ns="robot_2">
-    <!--node pkg="amcl" type="amcl" name="amcl">
-      <param name="use_map_topic" value="true"/>
-      <param name="base_frame_id" value="robot_1/base_footprint"/>
-      <param name="odom_frame_id" value="robot_1/odom"/>
-      <param name="tf_broadcast" value="true"/>
-      <param name="odom_model_type" value="diff-corrected"/>
-      <param name="odom_alpha1" value="0.0000000001"/>
-      <param name="odom_alpha2" value="0.0000000001"/>
-      <param name="odom_alpha3" value="0.0000000001"/>
-      <param name="odom_alpha4" value="0.0000000001"/>
-      <remap from="scan" to="base_scan"/>
-      <remap from="static_map" to="/static_map"/>
-      <remap from="map" to="/map"/>
-    </node-->
+    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="360"/>
+    </node>
+  </group>
+
+  <group ns="robot_3">
+    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="180"/>
+    </node>
+  </group>
+
+  <group ns="robot_4">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
       <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
       <param name="obstacle_velocity" value="1.0"/>
@@ -109,25 +98,19 @@
     </node>
   </group>
 
-  <group ns="robot_3">
-    <!--node pkg="amcl" type="amcl" name="amcl">
-      <param name="use_map_topic" value="true"/>
-      <param name="base_frame_id" value="robot_1/base_footprint"/>
-      <param name="odom_frame_id" value="robot_1/odom"/>
-      <param name="tf_broadcast" value="true"/>
-      <param name="odom_model_type" value="diff-corrected"/>
-      <param name="odom_alpha1" value="0.0000000001"/>
-      <param name="odom_alpha2" value="0.0000000001"/>
-      <param name="odom_alpha3" value="0.0000000001"/>
-      <param name="odom_alpha4" value="0.0000000001"/>
-      <remap from="scan" to="base_scan"/>
-      <remap from="static_map" to="/static_map"/>
-      <remap from="map" to="/map"/>
-    </node-->
+  <group ns="robot_5">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
       <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
       <param name="obstacle_velocity" value="1.0"/>
-      <param name="obstacle_steps" value="180"/>
+      <param name="obstacle_steps" value="60"/>
+    </node>
+  </group>
+
+  <group ns="robot_6">
+    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.75"/>
+      <param name="obstacle_steps" value="90"/>
     </node>
   </group>
 
