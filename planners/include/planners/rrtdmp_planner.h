@@ -105,6 +105,7 @@ namespace rrtdmp_planner{
       double controller_frequency_;
       int forward_bias_;
       std::string velocity_topic_;
+      ros::WallTime current_time_, previous_time_;
 
 
       // define RRT private member functions
@@ -140,6 +141,8 @@ namespace rrtdmp_planner{
       double tilt_bias_;
       double mp_range_scale_;
       int stop_loops_;
+      double linear_acceleration_max_;
+      double angular_acceleration_max_;
       geometry_msgs::Twist cmd_prev_;
 
       // define Dynamic Motion Primitive private member functions

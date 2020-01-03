@@ -1,5 +1,5 @@
 RRTDMPPlanner:
-  robot_radius: 5
+  robot_radius: 2
   goal_tolerance: 12
   path_tolerance: 30
   path_checkpoint_resolution: 1 # do not change
@@ -31,3 +31,5 @@ RRTDMPPlanner:
   p_dist_weight: 1.5
   p_ang_weight: 0.5
   tilt_bias: 0.785 #0.785rad is 45deg
+  linear_acceleration_max: 2.0
+  angular_acceleration_max: 2.0

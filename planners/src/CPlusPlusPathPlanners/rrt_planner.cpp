@@ -184,7 +184,7 @@ namespace rrt_planner {
       return true;
     }
 
-    ROS_INFO("The Goal Has Not Been Reached Yet");
+    //ROS_INFO("The Goal Has Not Been Reached Yet");
     return false;
   }
 
@@ -213,7 +213,7 @@ namespace rrt_planner {
     }
 
     base_local_planner::prunePlan(current_pose_, transformed_plan, global_plan_); // Trim off parts of the global plan that are far enough behind the robot
-    ROS_INFO("Received a transformed plan with %zu points.", transformed_plan.size());
+    //ROS_INFO("Received a transformed plan with %zu points.", transformed_plan.size());
 
     tf::Quaternion q1(current_pose_.pose.orientation.x,
                      current_pose_.pose.orientation.y,
@@ -240,7 +240,7 @@ namespace rrt_planner {
 
     path_and_cmd_ = RRTPlanner::rrt(qInit, qGoal);
 
-    ROS_INFO("Got path and velocity commands");
+    //ROS_INFO("Got path and velocity commands");
 
     base_local_planner::publishPlan(path_and_cmd_.path, l_plan_pub_);
     base_local_planner::publishPlan(transformed_plan, g_plan_pub_);
@@ -267,7 +267,8 @@ namespace rrt_planner {
     geometry_msgs::PoseArray points;
     std::vector<geometry_msgs::Pose> tempPoints;
     points.header.frame_id = global_frame_.c_str();
-    ros::WallTime current_time, previous_time;
+    ros::WallTime current_time, previous_time, c_planner_time, p_planner_time;
+    p_planner_time = ros::WallTime::now();
 
     int iterations = 0;
     int cntID = 0;
@@ -292,7 +293,7 @@ namespace rrt_planner {
 
       current_time = ros::WallTime::now();
       if(path_and_cmd_.cmd.size() > 0 && (current_time.toSec() - previous_time.toSec()) >= time_step_){
-        ROS_INFO("TIME PASSED: %f", (current_time - previous_time).toSec());
+        //ROS_INFO("TIME PASSED: %f", (current_time - previous_time).toSec());
         cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
         path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
         previous_time = ros::WallTime::now();
@@ -311,7 +312,7 @@ namespace rrt_planner {
                                    l_cm_pose_x_, l_cm_pose_y_);
 
       if(RRTPlanner::collisionTest(qRand, l_cm_obs_, robot_radius_) > 0){
-        ROS_INFO("Invalid Random Configuration");
+        //ROS_INFO("Invalid Random Configuration");
         continue;
       }
 
@@ -324,11 +325,11 @@ namespace rrt_planner {
         cntID = branch.back().id;
       }
       else{
-        ROS_INFO("Failed to Form Valid Branch");
+        //ROS_INFO("Failed to Form Valid Branch");
         continue;
       }
 
-      ROS_INFO("Added Branch to Tree");
+      //ROS_INFO("Added Branch to Tree");
       tree_.insert(tree_.end(), branch.begin(), branch.end()); // double check later
 
       for(int i=0; i<branch.size(); i++){
@@ -352,9 +353,15 @@ namespace rrt_planner {
         if(infD <= 0){
           path_found = true;
           path_and_cmd = RRTPlanner::extractPath(branch[i], tree_, qInit);
+          c_planner_time = ros::WallTime::now();
+          ROS_INFO("Planner Success: %f", (c_planner_time.toSec() - p_planner_time.toSec())); // Notify of planner success and time cost
           break;
         }
       }
+    }
+    if(path_and_cmd.cmd.size() <= 0){
+      c_planner_time = ros::WallTime::now();
+      ROS_INFO("Planner Failure: %f", (c_planner_time.toSec() - p_planner_time.toSec())); // Notify of planner failure and time cost
     }
 
     return path_and_cmd;
@@ -410,7 +417,7 @@ namespace rrt_planner {
       }
     }
 
-    ROS_INFO("Number of Obstacles in Local Costmap: %d", int(l_cm_obs_.size()));
+    //ROS_INFO("Number of Obstacles in Local Costmap: %d", int(l_cm_obs_.size()));
 
     motion_primitive_array_ = motion_primitive_array_const_;
 
@@ -609,7 +616,7 @@ namespace rrt_planner {
       if((current_time.toSec() - previous_time.toSec()) >= time_step_){
         cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
         path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
-        ROS_INFO("TIME PASSED: %f", (current_time.toSec() - previous_time.toSec()));
+        //ROS_INFO("TIME PASSED: %f", (current_time.toSec() - previous_time.toSec()));
         previous_time = ros::WallTime::now();
       }
       if(double(current_time.toSec() - initial_time.toSec()) >= double(1/controller_frequency_)){

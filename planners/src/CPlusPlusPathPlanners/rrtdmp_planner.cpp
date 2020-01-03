@@ -71,6 +71,8 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       private_nh.param("tilt_bias", tilt_bias_, 0.785);
       private_nh.param("mp_range_scale", mp_range_scale_, 0.125);
       private_nh.param("stop_loops", stop_loops_, 10);
+      private_nh.param("linear_acceleration_max", linear_acceleration_max_, 0.5);
+      private_nh.param("angular_acceleration_max", angular_acceleration_max_, 1.0);
 
       if(motion_primitive_resolution_ < 2){
         ROS_WARN("Motion Primitive Resolution must be greater than 1,"
@@ -131,6 +133,9 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 
       costmap_2d::Costmap2D* costmap = costmap_ros_ -> getCostmap();
       planner_util_.initialize(tf, costmap, costmap_ros_ -> getGlobalFrameID());
+
+      previous_time_ = ros::WallTime::now();
+      current_time_ = ros::WallTime::now();
 
       if( private_nh.getParam("odom_topic", odom_topic_)){
         odom_helper_.setOdomTopic(odom_topic_);
@@ -194,12 +199,12 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     dX = 1; // set in case ifs fail
     dY = 1;
     if(goal_pose_.pose.position.x/l_cm_resolution_ >= l_cm_width_+l_cm_pose_x_-1 || goal_pose_.pose.position.x/l_cm_resolution_ <= l_cm_pose_x_+1){
-      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_+robot_radius_);  // make the tolerance circle into something like an ellipsoid
-      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);  // make the tolerance circle into something like an ellipsoid
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_+robot_radius_);
     }
     else if(goal_pose_.pose.position.y/l_cm_resolution_ >= l_cm_height_+l_cm_pose_y_-1 || goal_pose_.pose.position.y/l_cm_resolution_ <= l_cm_pose_y_+1){
-      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
-      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_+robot_radius_);
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_+robot_radius_);
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
     }
     else{
       dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_/2+robot_radius_);
@@ -220,13 +225,13 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       return true;
     }
 
-    ROS_INFO("The Goal Has Not Been Reached Yet");
+    //ROS_INFO("The Goal Has Not Been Reached Yet");
     return false;
   }
 
 /********************************************************************************************************************/
   bool RRTDMPPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel){
-    ROS_INFO("Computing Velocity Commands");
+    //ROS_INFO("Computing Velocity Commands");
     if(! costmap_ros_ -> getRobotPose(current_pose_)){
       ROS_ERROR("Could not get robot pose");
       return false;
@@ -249,7 +254,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     }
 
     base_local_planner::prunePlan(current_pose_, transformed_plan, global_plan_); // Trim off parts of the global plan that are far enough behind the robot
-    ROS_INFO("Received a transformed plan with %zu points.", transformed_plan.size());
+   //ROS_INFO("Received a transformed plan with %zu points.", transformed_plan.size());
 
     tf::Quaternion q1(current_pose_.pose.orientation.x,
                      current_pose_.pose.orientation.y,
@@ -274,9 +279,16 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
                                          transformed_plan[int(transformed_plan.size()/path_checkpoint_resolution_) -1].pose.position.y/(costmap_ -> getResolution()),
                                          yaw2}, 0, {0, 0}};
 
-    path_and_cmd_ = RRTDMPPlanner::rrt(qInit, qGoal);
-    ROS_INFO("Got path and velocity commands");
+    RRTDMPPlanner::ros_cmd_t path_and_cmd;
 
+    path_and_cmd = RRTDMPPlanner::rrt(qInit, qGoal);
+    if(path_and_cmd.cmd.size() > 0){
+      path_and_cmd_ = path_and_cmd;
+      //ROS_INFO("Got path and velocity commands");
+    }
+    else{
+      //ROS_INFO("Failed to get new commands, continuing with old path...");
+    }
     base_local_planner::publishPlan(path_and_cmd_.path, l_plan_pub_);
     base_local_planner::publishPlan(transformed_plan, g_plan_pub_);
 
@@ -305,7 +317,8 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     geometry_msgs::PoseArray points;
     std::vector<geometry_msgs::Pose> tempPoints;
     points.header.frame_id = global_frame_.c_str();
-    ros::WallTime current_time, previous_time;
+    ros::WallTime c_planner_time, p_planner_time;
+    p_planner_time = ros::WallTime::now();
 
     int iterations = 0;
     int cntID = 0;
@@ -322,20 +335,20 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 //      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
 //      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
 //    }
-    previous_time = ros::WallTime::now();
+//    previous_time = ros::WallTime::now();
 
     ROS_INFO("RRT Planner Called");
     while(path_found == false && iterations < max_iterations_){
       iterations++;
 
-      current_time = ros::WallTime::now();
-      if(path_and_cmd_.cmd.size() > 0 && (current_time.toSec() - previous_time.toSec()) >= time_step_){
+      current_time_ = ros::WallTime::now();
+      if(path_and_cmd_.cmd.size() > 0 && (current_time_.toSec() - previous_time_.toSec()) >= time_step_){
         //ROS_INFO("TIME PASSED: %f", (current_time - previous_time).toSec());
         cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
         cmd_prev_ = path_and_cmd_.cmd[0];
         //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
         path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
-        previous_time = ros::WallTime::now();
+        previous_time_ = ros::WallTime::now();
       }
 
       if(base_local_planner::getGoalPose(*tf_, global_plan_, global_frame_, goal_pose_)){ //reset rrt planner if
@@ -389,12 +402,12 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
         dX = 1; // set in case ifs fail
         dY = 1;
         if(qGoal.pose[0] >= l_cm_width_+l_cm_pose_x_-1 || qGoal.pose[0] <= l_cm_pose_x_+1){
-          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_+robot_radius_);  // make the tolerance circle into something like an ellipsoid
-          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_/2+robot_radius_);
+          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_/2+robot_radius_);  // make the tolerance circle into something like an ellipsoid
+          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_+robot_radius_);
         }
         else if(qGoal.pose[1] >= l_cm_height_+l_cm_pose_y_-1 || qGoal.pose[1] <= l_cm_pose_y_+1){
-          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_/2+robot_radius_);
-          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_+robot_radius_);
+          dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_+robot_radius_);
+          dY = fabs(branch[i].pose[1] - qGoal.pose[1]) -1*fabs(path_tolerance_/2+robot_radius_);
         }
         else{
           dX = fabs(branch[i].pose[0] - qGoal.pose[0]) -1*fabs(path_tolerance_/2+robot_radius_);
@@ -406,11 +419,17 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
         if(dX <= 0 && dY <= 0){
           path_found = true;
           path_and_cmd = RRTDMPPlanner::extractPath(branch[i], tree_, qInit);
+          c_planner_time = ros::WallTime::now();
+          ROS_INFO("Planner Success: %f", (c_planner_time.toSec()-p_planner_time.toSec())); // Notify planner success and time cost
           break;
         }
       }
     }
 
+    if(path_and_cmd.cmd.size() <=0){
+      c_planner_time = ros::WallTime::now();
+      ROS_INFO("Planner Failure: %f", (c_planner_time.toSec()-p_planner_time.toSec())); // Notify planner failure and time cost
+    }
     return path_and_cmd;
   }
 
@@ -641,14 +660,14 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 
 /********************************************************************************************************************/
   void RRTDMPPlanner::velocityManager(){
-    ros::WallTime current_time, previous_time, initial_time;
-    if(path_and_cmd_.cmd.size() > 0){
-      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
-      cmd_prev_ = path_and_cmd_.cmd[0];
-      //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
-      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
-    }
-    else{
+    ros::WallTime initial_time;
+//    if(path_and_cmd_.cmd.size() > 0){
+//      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
+//      cmd_prev_ = path_and_cmd_.cmd[0];
+//      //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
+//      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
+//    }
+    if(path_and_cmd_.cmd.size() <= 0){
       geometry_msgs::Twist stop;
       for(int i=0; i<stop_loops_; i++){ // produce a set of motion commands to create a smooth stop for the robot
         stop.linear.x = cmd_prev_.linear.x - cmd_prev_.linear.x/(stop_loops_-i);
@@ -664,19 +683,20 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
       path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
     }
+
     initial_time = ros::WallTime::now();
-    previous_time = ros::WallTime::now();
+
     while(path_and_cmd_.cmd.size() > 0){
-      current_time = ros::WallTime::now();
-      if((current_time.toSec() - previous_time.toSec()) >= time_step_){
+      current_time_ = ros::WallTime::now();
+      if((current_time_.toSec() - previous_time_.toSec()) >= time_step_){
         cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
         cmd_prev_ = path_and_cmd_.cmd[0];
         //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
         path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
         //ROS_INFO("TIME PASSED: %f", (current_time.toSec() - previous_time.toSec()));
-        previous_time = ros::WallTime::now();
+        previous_time_ = ros::WallTime::now();
       }
-      if(double(current_time.toSec() - initial_time.toSec()) >= double(1/controller_frequency_)){
+      if(double(current_time_.toSec() - initial_time.toSec()) >= double(1/controller_frequency_)){
         break;
       }
     }
@@ -703,7 +723,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     f_rule = ruleForce();
     f_goal = goalForce(Goal);
     f_person = personForce();
-    ROS_INFO("f_rule: %f, f_goal: %f, f_person: %f", f_rule.magnitude, f_goal.magnitude, f_person.magnitude);
+    //ROS_INFO("f_rule: %f, f_goal: %f, f_person: %f", f_rule.magnitude, f_goal.magnitude, f_person.magnitude);
     //ROS_INFO("th_rule: %f, th_goal: %f, th_person: %f", f_rule.angle, f_goal.angle, f_person.angle);
     force_x = (rule_weight_*f_rule.magnitude*cos(f_rule.angle) *
                (1-person_weight_*f_person.magnitude) + //as the person force gets larger, the rule force is less important
@@ -718,7 +738,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
                person_weight_*f_person.magnitude*sin(f_person.angle) *
                (1+person_weight_*f_person.magnitude))/3;
 
-    ROS_INFO("force_x: %f, force_y: %f", force_x, force_y);
+    //ROS_INFO("force_x: %f, force_y: %f", force_x, force_y);
 
     //------------ only used for publishing pose ------------//
     if(! costmap_ros_ -> getRobotPose(current_pose_)){
@@ -738,40 +758,42 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 
     v_norm = linear_velocity_max_*force_x; // normalize to v range
     //ROS_INFO("v_norm: %f", v_norm);
+    if(v_norm > cmd_prev_.linear.x + linear_acceleration_max_*time_step_){ // force planner to adhere to acceleration constraints
+      v_norm = cmd_prev_.linear.x + linear_acceleration_max_*time_step_;
+    }
+    else if(v_norm < cmd_prev_.linear.x - linear_acceleration_max_*time_step_) {
+      v_norm = cmd_prev_.linear.x - linear_acceleration_max_*time_step_;
+    }
     if(v_norm > linear_velocity_max_){
       v_norm = linear_velocity_max_;
-//      v_min = linear_velocity_max_ - 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
     }
     else if(v_norm < -linear_velocity_max_){
       v_norm = -linear_velocity_max_;
-//      v_max = -linear_velocity_max_ + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
     }
-//    else{
-//      v_max = v_norm + 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
-//      v_min = v_norm - 2*(linear_velocity_max_-linear_velocity_min_)*mp_range_scale_;
-//    }
+
 
     vth_norm = angular_velocity_max_*force_y; // normalize to vth range
     //ROS_INFO("vth_norm: %f", vth_norm);
+    if(vth_norm > cmd_prev_.angular.x + angular_acceleration_max_*time_step_){
+      vth_norm = cmd_prev_.angular.x + angular_acceleration_max_*time_step_;
+    }
+    else if(vth_norm < cmd_prev_.angular.x - angular_acceleration_max_*time_step_) {
+      vth_norm = cmd_prev_.angular.x - angular_acceleration_max_*time_step_;
+    }
     if(vth_norm > angular_velocity_max_){
       vth_norm = angular_velocity_max_;
-//      vth_min = angular_velocity_max_ - 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
     }
     else if(vth_norm < -angular_velocity_max_){
       vth_norm = -angular_velocity_max_;
-//      vth_max = -angular_velocity_max_ + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
     }
-//    else{
-//      vth_max = vth_norm + 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
-//      vth_min = vth_norm - 2*(angular_velocity_max_-angular_velocity_min_)*mp_range_scale_;
-//    }
+
 
     // Start choosing MP Array
     motion_primitive_array_const_.clear(); // reset the MP Array
 
     RRTDMPPlanner::velocity_t motion_primitive = {0, 0};
     for(int i=0; i<motion_primitive_resolution_+1; i++){
-      motion_primitive.v = ((linear_velocity_max_*2.0)*(2.0*double(i)*v_st_dev-2.0*linear_velocity_max_)*(1.0/(v_st_dev*sqrt(2.0*3.14)))*
+      motion_primitive.v = ((linear_acceleration_max_*time_step_*2.0)*(2.0*double(i)*v_st_dev-2.0*linear_velocity_max_)*(1.0/(v_st_dev*sqrt(2.0*3.14)))*
                             exp(-0.5*pow(((2.0*double(i)*v_st_dev-2.0*linear_velocity_max_)/v_st_dev), 2))+v_norm)/l_cm_resolution_;
       //ROS_INFO("v: %f", motion_primitive.v);
       if(motion_primitive.v > linear_velocity_max_/l_cm_resolution_){
@@ -781,11 +803,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
         motion_primitive.v = -linear_velocity_max_/l_cm_resolution_;
       }
       for(int j=0; j<motion_primitive_resolution_+1; j++){
-            //((i+1)*((v_max - v_min)/(motion_primitive_resolution_))
-            //+ v_min)/l_cm_resolution_;
-            //(i*((v_max - v_min)/(motion_primitive_resolution_ - 1))
-            //+ v_min)/l_cm_resolution_;  // will make identical motion primitives if max = min
-        motion_primitive.vth = ((angular_velocity_max_*2.0)*(2.0*double(j)*vth_st_dev-2.0*angular_velocity_max_)*(1.0/(vth_st_dev*sqrt(2.0*3.14)))*
+        motion_primitive.vth = ((angular_acceleration_max_*time_step_*2.0)*(2.0*double(j)*vth_st_dev-2.0*angular_velocity_max_)*(1.0/(vth_st_dev*sqrt(2.0*3.14)))*
                                 exp(-0.5*pow(((2.0*double(j)*vth_st_dev-2.0*angular_velocity_max_)/vth_st_dev), 2))+vth_norm);
         //ROS_INFO("vth: %f", motion_primitive.vth);
         if(motion_primitive.vth > angular_velocity_max_){
@@ -794,10 +812,6 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
         else if(motion_primitive.vth < -angular_velocity_max_){
           motion_primitive.vth = -angular_velocity_max_;
         }
-            //((j+1)*((vth_max - vth_min)/(motion_primitive_resolution_))
-            //+ vth_min);
-            //(j*((vth_max - vth_min)/(motion_primitive_resolution_ - 1))
-            //+ vth_min); // will make identical motion primitives if max = min
         motion_primitive_array_const_.push_back(motion_primitive);
         //ROS_INFO("MP: [%f, %f]", motion_primitive.v, motion_primitive.vth);
       }
@@ -1069,7 +1083,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       force.angle = atan2(force_y,force_x);
     }
     else{
-      ROS_INFO("No People Detected");
+      //ROS_INFO("No People Detected");
       force.magnitude = 0.0;
       force.angle = 0.0;
     }
