@@ -41,7 +41,7 @@
   </node>
 
   <node pkg="serial_abot" type="wireless_communication" name="wireless_communication" output="screen">
-    <param name="people_num" value="2"/>
+    <param name="people_num" value="1"/>
     <param name="mirror_x" value="-1"/>
     <param name="mirror_y" value="1"/>
     <param name="swap_axes" value="false"/>

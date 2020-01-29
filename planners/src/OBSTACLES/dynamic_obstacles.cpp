@@ -6,6 +6,8 @@ int counter = 0;
 geometry_msgs::Twist cmd_vel;
 double obstacle_velocity = 0.0;
 int obstacle_steps = 10;
+int obstacle_delay_1;
+int obstacle_delay_2;
 std::string ns;
 std::string nn;
 
@@ -19,9 +21,16 @@ int main(int argc, char**argv){
   nn = ros::this_node::getName();
   nh.param(nn + "/obstacle_velocity", obstacle_velocity, 1.0);
   nh.param(nn + "/obstacle_steps", obstacle_steps, 10);
+  nh.param(nn + "/obstacle_delay_1", obstacle_delay_1, 0);
+  nh.param(nn + "/obstacle_delay_2", obstacle_delay_2, 0);
   cmd_vel.linear.x = obstacle_velocity;
 
   ros::Rate r(10);
+
+  for(int i=0; i<obstacle_delay_1; i++){
+    for(int j=0; j<obstacle_delay_2; j++){
+    }
+  }
 
   while(nh.ok()){
     if(counter > obstacle_steps){

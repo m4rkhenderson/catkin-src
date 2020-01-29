@@ -27,7 +27,7 @@ RRTDMPPlanner:
   rule_weight: 0.7
   goal_weight: 1.6
   person_weight: 0.7
-  avoid_ang: 0.0
+  avoid_ang: -0.2
   p_dist_weight: 1.5
   p_ang_weight: 0.5
   tilt_bias: 1.57 #0.785rad is 45deg

@@ -100,6 +100,9 @@ namespace rrt_planner {
       g_plan_pub_ = private_nh.advertise<nav_msgs::Path>("global_plan", 1);
       cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>(velocity_topic_, 10);
       tree_pub_ = private_nh.advertise<geometry_msgs::PoseArray>("tree", 100);
+      trajectory_pub_ = private_nh.advertise<nav_msgs::Path>("trajectory", 10); // for visualization (CCECE 2020)
+      trajectory_.header.frame_id = "map";
+      time_cost_pub_ = private_nh.advertise<std_msgs::Float64>("time_cost", 10);
 
       tf_ = tf;
       costmap_ros_ = costmap_ros;
@@ -135,7 +138,8 @@ namespace rrt_planner {
 
     reached_goal_ = false;
 
-    ROS_INFO("Got new plan");
+//    trajectory_.poses.clear(); // for visualization (CCECE 2020)
+    //ROS_INFO("Got new plan");
     return true;
   }
 
@@ -195,6 +199,8 @@ namespace rrt_planner {
       ROS_ERROR("Could not get robot pose");
       return false;
     }
+    trajectory_.poses.push_back(current_pose_);// for visualization (CCECE 2020)
+    trajectory_pub_.publish(trajectory_);// for visualization (CCECE 2020)
 
     costmap_ = costmap_ros_ -> getCostmap();
     if(! costmap_){
@@ -287,7 +293,7 @@ namespace rrt_planner {
 //    }
     previous_time = ros::WallTime::now();
 
-    ROS_INFO("RRT Planner Called");
+    //ROS_INFO("RRT Planner Called");
     while(path_found == false && iterations < max_iterations_){
       iterations++;
 
@@ -355,6 +361,8 @@ namespace rrt_planner {
           path_and_cmd = RRTPlanner::extractPath(branch[i], tree_, qInit);
           c_planner_time = ros::WallTime::now();
           ROS_INFO("Planner Success: %f", (c_planner_time.toSec() - p_planner_time.toSec())); // Notify of planner success and time cost
+          time_cost_.data = (c_planner_time.toSec()-p_planner_time.toSec());
+          time_cost_pub_.publish(time_cost_);
           break;
         }
       }
@@ -362,6 +370,8 @@ namespace rrt_planner {
     if(path_and_cmd.cmd.size() <= 0){
       c_planner_time = ros::WallTime::now();
       ROS_INFO("Planner Failure: %f", (c_planner_time.toSec() - p_planner_time.toSec())); // Notify of planner failure and time cost
+      time_cost_.data = (c_planner_time.toSec()-p_planner_time.toSec());
+      time_cost_pub_.publish(time_cost_);
     }
 
     return path_and_cmd;

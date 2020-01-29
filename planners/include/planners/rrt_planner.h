@@ -9,6 +9,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <base_local_planner/odometry_helper_ros.h>
 #include <base_local_planner/local_planner_util.h>
@@ -60,6 +61,8 @@ namespace rrt_planner{
       ros::Publisher g_plan_pub_;
       ros::Publisher cmd_vel_pub_;
       ros::Publisher tree_pub_;
+      ros::Publisher trajectory_pub_; // added for comparison in CCECE 2020 Paper
+      ros::Publisher time_cost_pub_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D* costmap_;
       geometry_msgs::PoseStamped current_pose_;
@@ -98,6 +101,8 @@ namespace rrt_planner{
       double controller_frequency_;
       int forward_bias_;
       std::string velocity_topic_;
+      nav_msgs::Path trajectory_;
+      std_msgs::Float64 time_cost_;
 
 
       // define RRT private member functions

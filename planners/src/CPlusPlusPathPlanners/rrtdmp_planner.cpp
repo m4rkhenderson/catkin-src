@@ -121,6 +121,9 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       f_goal_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("goal_force", 10);
       f_person_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("person_force", 10);
       f_total_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("total_force", 10);
+      trajectory_pub_ = private_nh.advertise<nav_msgs::Path>("trajectory", 10); // for visualization (CCECE 2020)
+      trajectory_.header.frame_id = "map";
+      time_cost_pub_ = private_nh.advertise<std_msgs::Float64>("time_cost", 10);
 
       people_sub_ = private_nh.subscribe("people", 10, RRTDMPPlanner::peopleCallback);
 
@@ -161,7 +164,9 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 
     reached_goal_ = false;
 
-    ROS_INFO("Got new plan");
+
+//    trajectory_.poses.clear(); // for visualization (CCECE 2020)
+    //ROS_INFO("Got new plan");
     return true;
   }
 
@@ -236,6 +241,8 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
       ROS_ERROR("Could not get robot pose");
       return false;
     }
+    trajectory_.poses.push_back(current_pose_);// for visualization (CCECE 2020)
+    trajectory_pub_.publish(trajectory_);// for visualization (CCECE 2020)
 
     costmap_ = costmap_ros_ -> getCostmap();
     if(! costmap_){
@@ -337,7 +344,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 //    }
 //    previous_time = ros::WallTime::now();
 
-    ROS_INFO("RRT Planner Called");
+    //ROS_INFO("RRT Planner Called");
     while(path_found == false && iterations < max_iterations_){
       iterations++;
 
@@ -421,6 +428,8 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
           path_and_cmd = RRTDMPPlanner::extractPath(branch[i], tree_, qInit);
           c_planner_time = ros::WallTime::now();
           ROS_INFO("Planner Success: %f", (c_planner_time.toSec()-p_planner_time.toSec())); // Notify planner success and time cost
+          time_cost_.data = (c_planner_time.toSec()-p_planner_time.toSec());
+          time_cost_pub_.publish(time_cost_);
           break;
         }
       }
@@ -429,6 +438,8 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
     if(path_and_cmd.cmd.size() <=0){
       c_planner_time = ros::WallTime::now();
       ROS_INFO("Planner Failure: %f", (c_planner_time.toSec()-p_planner_time.toSec())); // Notify planner failure and time cost
+      time_cost_.data = (c_planner_time.toSec()-p_planner_time.toSec());
+      time_cost_pub_.publish(time_cost_);
     }
     return path_and_cmd;
   }
@@ -1038,7 +1049,7 @@ geometry_msgs::PoseArray RRTDMPPlanner::people_;
 
         force.angle = atan2(per_y,per_x);
         if(force.angle < 1.57 && force.angle > -1.57){
-          force.angle = force.angle + -1*tilt_bias_*((0.62666/(0.25*sqrt(2*3.14)))*exp(-0.5*pow((force.angle-avoid_ang_)/0.25, 2)));// tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg // create a gradiant of effect using gaussian
+          force.angle = force.angle + -1*tilt_bias_*((0.31333/(0.125*sqrt(2*3.14)))*exp(-0.5*pow((force.angle-avoid_ang_)/0.125, 2)));// tilt force away from the person the closer the robot is to it // 0.785rad ~=45deg // create a gradiant of effect using gaussian
         }
         //ROS_INFO("magnitude: %f", force.magnitude);
         force_array.push_back(force);

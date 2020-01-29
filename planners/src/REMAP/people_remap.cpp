@@ -47,17 +47,9 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "people_remap");
   ros::NodeHandle nh;
-  ros::Rate r(10);
+  ros::Rate r(20);
 
   ros::Publisher people_pub = nh.advertise<geometry_msgs::PoseArray>("people", 10);
-//  ros::Publisher initPose_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/robot_1/initialpose", 10);
-//  ros::Subscriber robot_sub = nh.subscribe("/robot_0/initialpose", 10, robotCallback);
-//  ros::Subscriber person1_sub = nh.subscribe("/robot_1/odom", 10, peopleCallback);
-//  ros::Subscriber person2_sub = nh.subscribe("/robot_2/odom", 10, peopleCallback);
-//  ros::Subscriber person3_sub = nh.subscribe("/robot_3/odom", 10, peopleCallback);
-//  ros::Subscriber person4_sub = nh.subscribe("/robot_4/odom", 10, peopleCallback);
-//  ros::Subscriber person5_sub = nh.subscribe("/robot_5/odom", 10, peopleCallback);
-//  ros::Subscriber person6_sub = nh.subscribe("/robot_6/odom", 10, peopleCallback);
   geometry_msgs::Pose person;
 
   tf::TransformListener listener;
@@ -67,6 +59,8 @@ int main(int argc, char **argv)
   tf::StampedTransform transform_l_4;
   tf::StampedTransform transform_l_5;
   tf::StampedTransform transform_l_6;
+  tf::StampedTransform transform_l_7;
+  tf::StampedTransform transform_l_8;
 
   static tf::TransformBroadcaster br;
   tf::Transform transform;
@@ -87,6 +81,8 @@ int main(int argc, char **argv)
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_4/odom"));
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_5/odom"));
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_6/odom"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_7/odom"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/robot_0/odom", "/robot_8/odom"));
 
 
     // get transform for robot_1
@@ -198,6 +194,46 @@ int main(int argc, char **argv)
     person.position.y = transform_l_6.getOrigin().y();
     person.orientation.z = transform_l_6.getRotation().z();
     person.orientation.w = transform_l_6.getRotation().w();
+    ROS_INFO("x:%f, y%f, z:%f, w:%f", person.position.x, person.position.y, person.orientation.z, person.orientation.w);
+
+
+    people.poses.push_back(person);
+
+
+    // get transform for robot_7
+    try
+    {
+      listener.lookupTransform("/robot_0/base_link", "/robot_7/base_link", ros::Time(0), transform_l_7);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+    person.position.x = transform_l_7.getOrigin().x();
+    person.position.y = transform_l_7.getOrigin().y();
+    person.orientation.z = transform_l_7.getRotation().z();
+    person.orientation.w = transform_l_7.getRotation().w();
+    ROS_INFO("x:%f, y%f, z:%f, w:%f", person.position.x, person.position.y, person.orientation.z, person.orientation.w);
+
+
+    people.poses.push_back(person);
+
+
+    // get transform for robot_8
+    try
+    {
+      listener.lookupTransform("/robot_0/base_link", "/robot_8/base_link", ros::Time(0), transform_l_8);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+    person.position.x = transform_l_8.getOrigin().x();
+    person.position.y = transform_l_8.getOrigin().y();
+    person.orientation.z = transform_l_8.getRotation().z();
+    person.orientation.w = transform_l_8.getRotation().w();
     ROS_INFO("x:%f, y%f, z:%f, w:%f", person.position.x, person.position.y, person.orientation.z, person.orientation.w);
 
 

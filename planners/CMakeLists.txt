@@ -184,6 +184,9 @@ target_link_libraries(obstacle_distance ${catkin_LIBRARIES})
 add_executable(people_remap src/REMAP/people_remap.cpp)
 target_link_libraries(people_remap ${catkin_LIBRARIES})
 
+add_executable(initialize src/INITIALIZE/initialize.cpp)
+target_link_libraries(initialize ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp

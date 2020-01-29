@@ -10,6 +10,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
+#include <std_msgs/Float64.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <base_local_planner/odometry_helper_ros.h>
 #include <base_local_planner/local_planner_util.h>
@@ -125,6 +126,8 @@ namespace rrtdmp_planner{
       ros::Publisher f_goal_pub_;
       ros::Publisher f_person_pub_;
       ros::Publisher f_total_pub_;
+      ros::Publisher trajectory_pub_; // added for comparison in CCECE 2020 Paper
+      ros::Publisher time_cost_pub_;
       static geometry_msgs::PoseArray people_;
       double rule_offset_;
       double goal_offset_;
@@ -144,6 +147,8 @@ namespace rrtdmp_planner{
       double linear_acceleration_max_;
       double angular_acceleration_max_;
       geometry_msgs::Twist cmd_prev_;
+      nav_msgs::Path trajectory_;
+      std_msgs::Float64 time_cost_;
 
       // define Dynamic Motion Primitive private member functions
       void socialForceModel(vertex_t Goal);
