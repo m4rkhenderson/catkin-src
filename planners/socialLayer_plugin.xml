@@ -1,0 +1,5 @@
+<library path="lib/libsocial_layer">
+  <class type="social_layer_namespace::SocialLayer" base_class_type="costmap_2d::Layer">
+    <description>Costmap layer for adding social zones to people.</description>
+  </class>
+</library>

@@ -1,17 +1,16 @@
 <?xml version="1.0"?>
 
 <launch>
-
   <arg name="node_start_delay" default="5.0"/>
   <arg name="node_start_delay_2" default="10.0"/>
 
   <param name="use_sim_time" value="true"/>
 
-  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/rrtdmp_5.world">
+  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/rrtdmp_6.world">
     <!--remap from="tf" to="tf_old"/-->
     <remap from="/robot_0/cmd_vel" to="/robot_0/cmd_vel_0"/>
   </node>
-  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_5.yaml">
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_6.yaml">
     <!--remap from="/map" to="map"/-->
   </node>
   <!--node pkg="tf" type="tf_remap" name="tf_remap">
@@ -19,14 +18,9 @@
       [{old: /robot_0/odom, new: robot_0/odom},{old: /robot_0/base_footprint, new: robot_0/base_footprint},{old: /robot_0/base_link, new: robot_0/base_link},{old: /robot_0/base_laser_link, new: robot_0/base_laser_link}]
     </rosparam>
   </node-->
-  <node pkg="planners" type="remap_scan" name="remap_scan"/>
-  <node pkg="planners" type="clear_scan" name="clear_scan">
-    <param name="laser_frame_id" value="robot_0/base_laser_link"/>
-    <param name="reduction_factor" value="0.1"/>
-  </node>
 
   <node pkg="planners" type="people_remap" name="people_remap">
-    <remap from="people" to="/robot_0/move_base/RRTDMPPlanner/people"/>
+    <remap from="people" to="/robot_0/people"/>
   </node>
 
   <group ns="robot_0">
@@ -42,6 +36,11 @@
       <param name="base_frame" value="/robot_0/base_footprint"/>
     </node-->
 
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_0/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
     <node pkg="amcl" type="amcl" name="amcl">
       <param name="use_map_topic" value="true"/>
       <param name="base_frame_id" value="robot_0/base_footprint"/>
@@ -56,97 +55,200 @@
       <remap from="static_map" to="/static_map"/>
       <remap from="map" to="/map"/>
     </node>
-    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
-      <rosparam file="$(find planners)/launch/config/dynamic_costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find planners)/launch/config/dynamic_costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find planners)/launch/config/dynamic_local_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find planners)/launch/config/dynamic_global_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find planners)/launch/config/rrtdmp_local_planner_params.yaml" command="load"/>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" output="screen">
+      <rosparam file="$(find planners)/launch/config/robot_0/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/local_planner_params.yaml" command="load"/>
       <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
       <param name="planner_frequency" value="1"/>
       <param name="recovery_behavior_enabled" value="false"/>
-      <remap from="/robot_0/move_base/RRTDMPPlanner/robot_0/cmd_vel" to="cmd_vel_0"/>
+      <remap from="/robot_0/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_0"/>
+      <remap from="/robot_0/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_0/move_base/global_costmap/social_layer/people" to="people"/>
       <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/abot.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 robot_0/base_link robot_0/abot/base_bottom 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_0"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_1">
-    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles" output="screen">
       <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="180"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="5000"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_1/base_link robot_1/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_1"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_2">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="180"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="17500"/>
+      <remap from="/robot_2/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_2/base_link robot_2/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_2"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_3">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="180"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="17500"/>
+      <remap from="/robot_3/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_3/base_link robot_3/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_3"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_4">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="200"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="37500"/>
+      <remap from="/robot_4/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="400"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_4/base_link robot_4/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_4"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_5">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="200"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="37500"/>
+      <remap from="/robot_5/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="400"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_5/base_link robot_5/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_5"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_6">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="180"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="37500"/>
+      <remap from="/robot_6/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_6/base_link robot_6/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_6"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_7">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="200"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="47500"/>
+      <remap from="/robot_7/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="500000"/>
+      <param name="obstacle_delay_2" value="100000"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_7/base_link robot_7/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_7"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
   <group ns="robot_8">
     <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
-      <remap from="/robot_1/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
-      <param name="obstacle_velocity" value="0.25"/>
-      <param name="obstacle_steps" value="180"/>
-      <param name="obstacle_delay_1" value="1000000"/>
-      <param name="obstacle_delay_2" value="67500"/>
+      <remap from="/robot_8/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_8/base_link robot_8/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_8"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_9">
+    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_9/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_9/base_link robot_9/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_9"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
     </node>
   </group>
 
@@ -158,12 +260,12 @@
   <node pkg="planners" type="initialize" name="initialize" output="screen"/>
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find planners)/launch/config/rviz/rrtdmp_2.rviz">
-    <remap from="initialpose" to="robot_0/initialpose"/><!--remap rviz initial position button-->
-    <remap from="move_base_simple/goal" to="robot_0/move_base_simple/goal"/><!--remap rviz goal position button-->
+    <remap from="initialpose" to="robot_0/initialpose"/>
+    <remap from="move_base_simple/goal" to="robot_0/move_base_simple/goal"/>
   </node>
 
   <node pkg="rosbag" type="record" name="rrtdmp_record_trajectory"
     args="robot_0/move_base/RRTDMPPlanner/trajectory robot_0/
-          robot_0/move_base/RRTDMPPlanner/time_cost"/>
+          robot_0/move_base/RRTDMPPlanner/people"/>
 
 </launch>

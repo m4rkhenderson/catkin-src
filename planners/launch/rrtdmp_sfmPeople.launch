@@ -1,0 +1,625 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="node_start_delay" default="5.0"/>
+  <arg name="node_start_delay_2" default="10.0"/>
+  <arg name="node_start_delay_3" default="30.0"/>
+
+  <param name="use_sim_time" value="true"/>
+
+  <!--node pkg="planners" type="map_remap" name="map_remap" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" output="screen"/-->
+
+  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/rrtdmp_7.world">
+    <!--remap from="tf" to="tf_old"/-->
+    <remap from="/robot_0/cmd_vel" to="/robot_0/cmd_vel_0"/>
+  </node>
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_6.yaml">
+    <!--remap from="/map" to="map"/-->
+  </node>
+  <!--node pkg="tf" type="tf_remap" name="tf_remap">
+    <rosparam param="mappings">
+      [{old: /robot_0/odom, new: robot_0/odom},{old: /robot_0/base_footprint, new: robot_0/base_footprint},{old: /robot_0/base_link, new: robot_0/base_link},{old: /robot_0/base_laser_link, new: robot_0/base_laser_link}]
+    </rosparam>
+  </node-->
+
+  <!--node pkg="planners" type="people_remap" name="people_remap">
+    <remap from="people" to="/robot_0/people"/>
+  </node-->
+
+  <group ns="robot_0">
+    <!--param name="tf_prefix" value="robot_0"/-->
+    <!--node pkg="planners" type="waypoint_markers" name="waypoint_markers">
+      <param name="num_markers" value="7"/>
+      <param name="base_frame" value="/robot_0/base_footprint"/>
+      <param name="goal_tolerance" value="5.0"/>
+    </node-->
+    <node pkg="planners" type="people_remap" name="people_remap">
+      <param name="num_people" value="30"/>
+    </node>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_0/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="amcl" type="amcl" name="amcl">
+      <param name="use_map_topic" value="true"/>
+      <param name="base_frame_id" value="robot_0/base_footprint"/>
+      <param name="odom_frame_id" value="robot_0/odom"/>
+      <param name="tf_broadcast" value="true"/>
+      <param name="odom_model_type" value="diff-corrected"/>
+      <param name="odom_alpha1" value="0.05"/>
+      <param name="odom_alpha2" value="0.05"/>
+      <param name="odom_alpha3" value="0.05"/>
+      <param name="odom_alpha4" value="0.05"/>
+      <remap from="scan" to="base_scan"/>
+      <remap from="static_map" to="/static_map"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" output="screen">
+      <rosparam file="$(find planners)/launch/config/robot_0/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_0/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_0"/>
+      <remap from="/robot_0/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_0/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/abot.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 robot_0/base_link robot_0/abot/base_bottom 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_0"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_1">
+    <node pkg="planners" type="SFM" name="SFM" output="screen">
+      <remap from="/robot_1/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_1/base_link robot_1/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_1"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_2">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_2/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_2/base_link robot_2/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_2"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_3">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_3/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_3/base_link robot_3/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_3"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_4">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_4/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_4/base_link robot_4/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_4"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_5">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_5/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_5/base_link robot_5/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_5"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_6">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_6/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_6/base_link robot_6/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_6"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_7">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_7/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_7/base_link robot_7/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_7"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_8">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_8/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_8/base_link robot_8/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_8"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_9">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_9/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="27.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_9/base_link robot_9/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_9"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+  <!--end of case 1-->
+
+
+  <group ns="robot_10">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_10/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="0.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_10/base_link robot_10/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_10"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_11">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_11/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="0.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_11/base_link robot_11/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_11"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_12">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_12/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="0.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_12/base_link robot_12/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_12"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_13">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_13/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="0.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_13/base_link robot_13/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_13"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_14">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_14/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="0.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_14/base_link robot_14/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_14"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_15">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_15/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="0.0"/>
+      <param name="goal_y" value="-11.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_15/base_link robot_15/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_15"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+  <!--end of case 2-->
+
+
+  <group ns="robot_16">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_16/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="0.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_16/base_link robot_16/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_16"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_17">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_17/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="0.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_17/base_link robot_17/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_17"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_18">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_18/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="0.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_18/base_link robot_18/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_18"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_19">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_19/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="0.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_19/base_link robot_19/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_19"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+  <!--end of case 3-->
+
+
+  <group ns="robot_20">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_20/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="12.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_20/base_link robot_20/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_20"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_21">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_21/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="12.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_21/base_link robot_21/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_21"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_22">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_22/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="12.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_22/base_link robot_22/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_22"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_23">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_23/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-27.0"/>
+      <param name="goal_y" value="12.0"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_23/base_link robot_23/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_23"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+  <!--end of case 4-->
+
+
+  <group ns="robot_24">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_24/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-5.0"/>
+      <param name="goal_y" value="11.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_24/base_link robot_24/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_24"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_25">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_25/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="-5.0"/>
+      <param name="goal_y" value="11.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_25/base_link robot_25/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_25"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+  <!--end of case 5-->
+
+
+  <group ns="robot_26">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_26/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="28.0"/>
+      <param name="goal_y" value="3.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_26/base_link robot_26/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_26"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_27">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_27/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="28.0"/>
+      <param name="goal_y" value="3.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_27/base_link robot_27/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_27"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_28">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_28/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="28.0"/>
+      <param name="goal_y" value="3.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_28/base_link robot_28/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_28"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_29">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_29/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="28.0"/>
+      <param name="goal_y" value="3.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_29/base_link robot_29/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_29"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_30">
+    <node pkg="planners" type="SFM" name="SFM">
+      <remap from="/robot_30/SFM/cmd_vel" to="cmd_vel"/>
+      <param name="goal_x" value="28.0"/>
+      <param name="goal_y" value="3.5"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_30/base_link robot_30/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_30"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+  <!--end of case 6-->
+
+
+  <node pkg="planners" type="initialize" name="initialize" launch-prefix="bash -c 'sleep $(arg node_start_delay_3); $0 $@'" output="screen">
+    <param name="num_people" value="30"/>
+    <param name="case_01_people" value="9"/>
+    <param name="case_02_people" value="6"/>
+    <param name="case_03_people" value="4"/>
+    <param name="case_04_people" value="4"/>
+    <param name="case_05_people" value="2"/>
+    <param name="case_06_people" value="5"/>
+  </node>
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find planners)/launch/config/rviz/rrtdmp_2.rviz">
+    <remap from="initialpose" to="robot_0/initialpose"/>
+    <remap from="move_base_simple/goal" to="robot_0/move_base_simple/goal"/>
+  </node>
+
+  <!--node pkg="rosbag" type="record" name="rrtdmp_record_trajectory"
+    args="robot_0/move_base/RRTDMPPlanner/trajectory robot_0/
+          robot_0/move_base/RRTDMPPlanner/people"/-->
+
+</launch>

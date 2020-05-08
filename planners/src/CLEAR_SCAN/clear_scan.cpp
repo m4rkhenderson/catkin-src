@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   ros::NodeHandle nh;
 
   ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("clear_scan", 10);
-  ros::Subscriber scan_sub = nh.subscribe("base_scan", 10, scanCallback);
+  ros::Subscriber scan_sub = nh.subscribe("laser_scan", 10, scanCallback);
 
   nn = ros::this_node::getName();
   nh.param<std::string>(nn + "/laser_frame_id", frame_id, "laser");

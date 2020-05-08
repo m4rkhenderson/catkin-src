@@ -153,6 +153,24 @@ install(TARGETS rrtdmp_planner
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     )
 
+add_library(social_layer src/COSTMAP_LAYERS/social_layer.cpp)
+add_dependencies(social_layer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(social_layer ${catkin_LIBRARIES})
+
+install(TARGETS social_layer
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    )
+
+add_library(rule_layer src/COSTMAP_LAYERS/rule_layer.cpp)
+add_dependencies(rule_layer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(rule_layer ${catkin_LIBRARIES})
+
+install(TARGETS rule_layer
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    )
+
 install(DIRECTORY include/${PROJECT_NAME}/
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
     PATTERN ".svn" EXCLUDE
@@ -166,11 +184,22 @@ install(FILES rdmplp_plugin.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
+install(FILES socialLayer_plugin.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    )
+
+install(FILES ruleLayer_plugin.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    )
+
 add_executable(remap_scan src/REMAP/remap_scan.cpp)
 target_link_libraries(remap_scan ${catkin_LIBRARIES})
 
 add_executable(dynamic_obstacles src/OBSTACLES/dynamic_obstacles.cpp)
 target_link_libraries(dynamic_obstacles ${catkin_LIBRARIES})
+
+add_executable(smart_obstacle_goal src/OBSTACLES/smart_obstacle_goal.cpp)
+target_link_libraries(smart_obstacle_goal ${catkin_LIBRARIES})
 
 add_executable(clear_scan src/CLEAR_SCAN/clear_scan.cpp)
 target_link_libraries(clear_scan ${catkin_LIBRARIES})
@@ -187,6 +216,11 @@ target_link_libraries(people_remap ${catkin_LIBRARIES})
 add_executable(initialize src/INITIALIZE/initialize.cpp)
 target_link_libraries(initialize ${catkin_LIBRARIES})
 
+add_executable(SFM src/OBSTACLES/SFM.cpp)
+target_link_libraries(SFM ${catkin_LIBRARIES})
+
+add_executable(map_remap src/REMAP/map_remap.cpp)
+target_link_libraries(map_remap ${catkin_LIBRARIES})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp
@@ -220,7 +254,7 @@ target_link_libraries(initialize ${catkin_LIBRARIES})
 #   ${catkin_LIBRARIES}
 # )
 
-#############
+#############<costmap_2d plugin="${prefix}/socialLayer_plugin.xml"/>
 ## Install ##
 #############
 

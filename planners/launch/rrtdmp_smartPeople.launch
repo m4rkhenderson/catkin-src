@@ -1,0 +1,467 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="node_start_delay" default="5.0"/>
+  <arg name="node_start_delay_2" default="10.0"/>
+
+  <param name="use_sim_time" value="true"/>
+
+  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/rrtdmp_6.world">
+    <!--remap from="tf" to="tf_old"/-->
+    <remap from="/robot_0/cmd_vel" to="/robot_0/cmd_vel_0"/>
+    <remap from="/robot_1/cmd_vel" to="/robot_1/cmd_vel_1"/>
+    <remap from="/robot_2/cmd_vel" to="/robot_2/cmd_vel_2"/>
+    <remap from="/robot_3/cmd_vel" to="/robot_3/cmd_vel_3"/>
+    <remap from="/robot_4/cmd_vel" to="/robot_4/cmd_vel_4"/>
+    <remap from="/robot_5/cmd_vel" to="/robot_5/cmd_vel_5"/>
+    <remap from="/robot_6/cmd_vel" to="/robot_6/cmd_vel_6"/>
+    <remap from="/robot_7/cmd_vel" to="/robot_7/cmd_vel_7"/>
+    <remap from="/robot_8/cmd_vel" to="/robot_8/cmd_vel_8"/>
+    <!--remap from="/robot_9/cmd_vel" to="/robot_9/cmd_vel_9"/-->
+  </node>
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_6.yaml">
+    <!--remap from="/map" to="map"/-->
+  </node>
+  <!--node pkg="tf" type="tf_remap" name="tf_remap">
+    <rosparam param="mappings">
+      [{old: /robot_0/odom, new: robot_0/odom},{old: /robot_0/base_footprint, new: robot_0/base_footprint},{old: /robot_0/base_link, new: robot_0/base_link},{old: /robot_0/base_laser_link, new: robot_0/base_laser_link}]
+    </rosparam>
+  </node-->
+
+  <!--node pkg="planners" type="people_remap" name="people_remap">
+    <remap from="people" to="/robot_0/people"/>
+  </node-->
+
+  <group ns="robot_0">
+    <!--param name="tf_prefix" value="robot_0"/-->
+    <!--node pkg="planners" type="waypoint_markers" name="waypoint_markers">
+      <param name="num_markers" value="7"/>
+      <param name="base_frame" value="/robot_0/base_footprint"/>
+      <param name="goal_tolerance" value="5.0"/>
+    </node-->
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_0/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="amcl" type="amcl" name="amcl">
+      <param name="use_map_topic" value="true"/>
+      <param name="base_frame_id" value="robot_0/base_footprint"/>
+      <param name="odom_frame_id" value="robot_0/odom"/>
+      <param name="tf_broadcast" value="true"/>
+      <param name="odom_model_type" value="diff-corrected"/>
+      <param name="odom_alpha1" value="0.05"/>
+      <param name="odom_alpha2" value="0.05"/>
+      <param name="odom_alpha3" value="0.05"/>
+      <param name="odom_alpha4" value="0.05"/>
+      <remap from="scan" to="base_scan"/>
+      <remap from="static_map" to="/static_map"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_0/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_0/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_0/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_0"/>
+      <remap from="/robot_0/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_0/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/abot.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 robot_0/base_link robot_0/abot/base_bottom 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_0"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_1">
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_1/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="27.0"/>
+      <param name="y_pos" value="-11.0"/>
+    </node>
+    <!--node pkg="amcl" type="amcl" name="amcl">
+      <param name="use_map_topic" value="true"/>
+      <param name="base_frame_id" value="robot_1/base_footprint"/>
+      <param name="odom_frame_id" value="robot_1/odom"/>
+      <param name="tf_broadcast" value="true"/>
+      <param name="odom_model_type" value="diff-corrected"/>
+      <param name="odom_alpha1" value="0.05"/>
+      <param name="odom_alpha2" value="0.05"/>
+      <param name="odom_alpha3" value="0.05"/>
+      <param name="odom_alpha4" value="0.05"/>
+      <remap from="scan" to="base_scan"/>
+      <remap from="static_map" to="/static_map"/>
+      <remap from="map" to="/map"/>
+    </node-->
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_1/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_1/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_1/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_1/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_1/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_1/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_1"/>
+      <remap from="/robot_1/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_1/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_1/base_link robot_1/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_1"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_2">
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_2/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="27.0"/>
+      <param name="y_pos" value="-11.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_2/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_2/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_2/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_2/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_2/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_2/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_2"/>
+      <remap from="/robot_2/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_2/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_2/base_link robot_2/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_2"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_3">
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_3/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="27.0"/>
+      <param name="y_pos" value="-11.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_3/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_3/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_3/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_3/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_3/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_3/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_3"/>
+      <remap from="/robot_3/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_3/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_3/base_link robot_3/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_3"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_4">
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_4/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="0.0"/>
+      <param name="y_pos" value="-11.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_4/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_4/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_4/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_4/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_4/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_4/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_4"/>
+      <remap from="/robot_4/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_4/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_4/base_link robot_4/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_4"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_5">
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_5/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="0.0"/>
+      <param name="y_pos" value="-11.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_5/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_5/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_5/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_5/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_5/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_5/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_5"/>
+      <remap from="/robot_5/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_5/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_5/base_link robot_5/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_5"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_6">
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_6/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="-25.0"/>
+      <param name="y_pos" value="-11.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_6/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_6/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_6/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_6/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_6/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_6/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_6"/>
+      <remap from="/robot_6/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_6/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_6/base_link robot_6/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_6"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_7">
+    <!--node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_7/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node-->
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_7/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="-24.0"/>
+      <param name="y_pos" value="4.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_7/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_7/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_7/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_7/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_7/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_7/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_7"/>
+      <remap from="/robot_7/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_7/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_7/base_link robot_7/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_7"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_8">
+    <!--node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_8/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node-->
+    <node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_8/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="-1.0"/>
+      <param name="y_pos" value="11.5"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_8/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_8/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_8/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_8/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_8/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_8/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_8"/>
+      <remap from="/robot_8/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_8/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node>
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_8/base_link robot_8/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_8"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <group ns="robot_9">
+    <node pkg="planners" type="dynamic_obstacles" name="dynamic_obstacles">
+      <remap from="/robot_9/dynamic_obstacles/cmd_vel" to="cmd_vel"/>
+      <param name="obstacle_velocity" value="0.5"/>
+      <param name="obstacle_steps" value="600"/>
+      <param name="obstacle_delay_1" value="0"/>
+      <param name="obstacle_delay_2" value="0"/>
+    </node>
+    <!--node pkg="planners" type="people_remap" name="people_remap"/>
+    <node pkg="planners" type="remap_scan" name="remap_scan"/>
+    <node pkg="planners" type="clear_scan" name="clear_scan">
+      <param name="laser_frame_id" value="robot_9/base_laser_link"/>
+      <param name="reduction_factor" value="0.1"/>
+    </node>
+    <node pkg="planners" type="smart_obstacle_goal" name="smart_obstacle_goal">
+      <param name="x_pos" value="-6.5"/>
+      <param name="y_pos" value="-6.0"/>
+    </node>
+    <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'">
+      <rosparam file="$(find planners)/launch/config/robot_9/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_9/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find planners)/launch/config/robot_9/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_9/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find planners)/launch/config/robot_9/local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+      <param name="use_dijkstra" value="false"/>
+      <param name="planner_frequency" value="1"/>
+      <param name="recovery_behavior_enabled" value="false"/>
+      <remap from="/robot_9/move_base/RRTDMPPlanner/cmd_vel" to="cmd_vel_9"/>
+      <remap from="/robot_9/move_base/RRTDMPPlanner/people" to="people"/>
+      <remap from="/robot_9/move_base/global_costmap/social_layer/people" to="people"/>
+      <remap from="map" to="/map"/>
+    </node-->
+    <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
+    <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_9/base_link robot_9/human/base 100"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="publish_frequency" type="double" value="10.0"/>
+      <param name="tf_prefix" value="robot_9"/>
+    </node>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+      <param name="use_gui" value="false"/>
+    </node>
+  </group>
+
+  <node pkg="planners" type="initialize" name="initialize" output="screen"/>
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find planners)/launch/config/rviz/rrtdmp_2.rviz">
+    <remap from="initialpose" to="robot_0/initialpose"/>
+    <remap from="move_base_simple/goal" to="robot_0/move_base_simple/goal"/>
+  </node>
+
+  <!--node pkg="rosbag" type="record" name="rrtdmp_record_trajectory"
+    args="robot_0/move_base/RRTDMPPlanner/trajectory robot_0/
+          robot_0/move_base/RRTDMPPlanner/people"/-->
+
+</launch>

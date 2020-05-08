@@ -1,0 +1,20 @@
+footprint: [[0.36,0.0],[0.28,0.24],[0.0,0.36],[-0.47,0.15],[-0.47,-0.15],[0.0,-0.36],[0.28,-0.24]]
+
+cost_factor: 0.55 #0.8
+neutral_cost: 66 #50
+lethal_cost: 253
+
+transform_tolerance: 0.3
+obstacle_range: 11.5 #2.5
+max_obstacle_height: 3.0
+min_obstacle_height: 0.0
+raytrace_range: 12.0 #3.0
+
+obstacle_layer:
+  observation_sources: laser_scan clear_scan
+  laser_scan: {data_type: LaserScan, sensor_frame: robot_2/base_laser_link, clearing: true, marking: true, topic: /robot_2/laser_scan, expected_update_rate: 20}
+  clear_scan: {data_type: LaserScan, sensor_frame: robot_2/base_laser_link, clearing: true, marking: false, topic: /robot_2/clear_scan, expected_update_rate: 20}
+
+inflation_layer:
+  inflation_radius: 1.5
+  cost_scaling_factor: 1.5

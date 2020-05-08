@@ -1,0 +1,5 @@
+<library path="lib/librule_layer">
+  <class type="rule_layer_namespace::RuleLayer" base_class_type="costmap_2d::Layer">
+    <description>Costmap layer for adding simple social rule to costmap</description>
+  </class>
+</library>

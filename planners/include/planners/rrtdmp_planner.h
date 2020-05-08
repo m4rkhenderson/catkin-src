@@ -41,6 +41,7 @@ namespace rrtdmp_planner{
         double pose[3];
         int pid;
         double vel[2];
+        double cost;
       };
       struct obstacle_t{
         double pose[2];
@@ -53,6 +54,7 @@ namespace rrtdmp_planner{
       struct ros_cmd_t{
         std::vector<geometry_msgs::PoseStamped> path;
         std::vector<geometry_msgs::Twist> cmd;
+        double cost;
       };
       struct force_t{
         double magnitude;
@@ -71,7 +73,7 @@ namespace rrtdmp_planner{
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D* costmap_;
       geometry_msgs::PoseStamped current_pose_;
-      int obstacle_inflation_radius_;
+      std::vector<int> obstacle_inflation_radius_;
       base_local_planner::LocalPlannerUtil planner_util_;
       base_local_planner::OdometryHelperRos odom_helper_;
       std::string odom_topic_;
@@ -79,20 +81,20 @@ namespace rrtdmp_planner{
       std::string global_frame_;
       bool reached_goal_;
       geometry_msgs::PoseStamped goal_pose_;
-      int robot_radius_;
-      int goal_tolerance_;
-      int path_tolerance_;
-      int path_checkpoint_resolution_;
+      std::vector<int> robot_radius_;
+      std::vector<int> goal_tolerance_;
+      std::vector<int> path_tolerance_;
+      std::vector<int> path_checkpoint_resolution_;
       std::vector<velocity_t> motion_primitive_array_;
       std::vector<velocity_t> motion_primitive_array_const_;
-      double linear_velocity_max_;
-      double angular_velocity_max_;
-      double linear_velocity_min_;
-      double angular_velocity_min_;
-      int motion_primitive_resolution_;
-      double time_step_;
-      int num_step_;
-      int max_iterations_;
+      std::vector<double> linear_velocity_max_;
+      std::vector<double> angular_velocity_max_;
+      std::vector<double> linear_velocity_min_;
+      std::vector<double> angular_velocity_min_;
+      std::vector<int> motion_primitive_resolution_;
+      std::vector<double> time_step_;
+      std::vector<int> num_step_;
+      std::vector<int> max_iterations_;
       std::vector<vertex_t> tree_;
       nav_msgs::OccupancyGrid rrt_local_costmap_;
       unsigned int l_cm_width_;
@@ -100,11 +102,11 @@ namespace rrtdmp_planner{
       double l_cm_resolution_;
       double l_cm_pose_x_;
       double l_cm_pose_y_;
-      bool l_cm_border_;
+      std::vector<bool> l_cm_border_;
       std::vector<rrtdmp_planner::RRTDMPPlanner::obstacle_t> l_cm_obs_;
       ros_cmd_t path_and_cmd_;
-      double controller_frequency_;
-      int forward_bias_;
+      std::vector<double> controller_frequency_;
+      std::vector<int> forward_bias_;
       std::string velocity_topic_;
       ros::WallTime current_time_, previous_time_;
 
@@ -128,27 +130,42 @@ namespace rrtdmp_planner{
       ros::Publisher f_total_pub_;
       ros::Publisher trajectory_pub_; // added for comparison in CCECE 2020 Paper
       ros::Publisher time_cost_pub_;
+      ros::Publisher comparison_plan_pub_; // added for better comparison
       static geometry_msgs::PoseArray people_;
-      double rule_offset_;
-      double goal_offset_;
-      double person_offset_;
-      double rule_scale_;
-      double goal_scale_;
-      double person_scale_;
-      double rule_weight_;
-      double goal_weight_;
-      double person_weight_;
-      double avoid_ang_;
-      double p_dist_weight_;
-      double p_ang_weight_;
-      double tilt_bias_;
-      double mp_range_scale_;
-      int stop_loops_;
-      double linear_acceleration_max_;
-      double angular_acceleration_max_;
+      std::vector<double> rule_offset_;
+      std::vector<double> goal_offset_;
+      std::vector<double> person_offset_;
+      std::vector<double> rule_scale_;
+      std::vector<double> goal_scale_;
+      std::vector<double> person_scale_;
+      std::vector<double> rule_weight_;
+      std::vector<double> goal_weight_;
+      std::vector<double> person_weight_;
+      std::vector<double> avoid_ang_;
+      std::vector<double> p_dist_weight_;
+      std::vector<double> p_ang_weight_;
+      std::vector<double> tilt_bias_;
+      std::vector<double> mp_range_scale_;
+      std::vector<int> stop_loops_;
+      std::vector<double> linear_acceleration_max_;
+      std::vector<double> angular_acceleration_max_;
       geometry_msgs::Twist cmd_prev_;
       nav_msgs::Path trajectory_;
       std_msgs::Float64 time_cost_;
+
+      // new parameters
+      static double person_time_;
+      static ros::WallTime person_time_c_, person_time_p_;
+      std::vector<double> people_p_;
+      std::vector<double> rule_max_;
+      std::vector<double> goal_max_;
+      std::vector<double> person_max_;
+      std::vector<int> failure_max_;
+      int failures_;
+      bool use_backup_;
+      bool safety_;
+      int safety_loops_;
+      std::vector<bool> carlike_;
 
       // define Dynamic Motion Primitive private member functions
       void socialForceModel(vertex_t Goal);
@@ -156,6 +173,10 @@ namespace rrtdmp_planner{
       force_t goalForce(vertex_t Goal);
       force_t personForce();
       static void peopleCallback(const geometry_msgs::PoseArray& data);
+
+      // define Parameter Selection private member function and parameters
+      void selectParameters(double v_h);
+      int k_;
   };
 };
 
