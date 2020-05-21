@@ -210,6 +210,9 @@ target_link_libraries(waypoint_markers ${catkin_LIBRARIES})
 add_executable(obstacle_distance src/DATA_COLLECTION/obstacle_distance.cpp)
 target_link_libraries(obstacle_distance ${catkin_LIBRARIES})
 
+add_executable(social_individual_index src/DATA_COLLECTION/social_individual_index.cpp)
+target_link_libraries(social_individual_index ${catkin_LIBRARIES})
+
 add_executable(people_remap src/REMAP/people_remap.cpp)
 target_link_libraries(people_remap ${catkin_LIBRARIES})
 

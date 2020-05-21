@@ -3,6 +3,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_listener.h>
 #include <std_srvs/Empty.h>
+#include <vector>
 
 geometry_msgs::PoseWithCovarianceStamped init;
 std::vector<geometry_msgs::PoseStamped> goal;
@@ -12,32 +13,44 @@ std::string nn;
 double distance;
 int k;
 int NP;
-int NP_01;
-int NP_02;
-int NP_03;
-int NP_04;
-int NP_05;
-int NP_06;
+std::vector<int> CP;
+int NC;
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "initialize");
   ros::NodeHandle nh;
+  ros::Rate r(10);
 
   ros::Publisher init_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("robot_0/initialpose", 10);
   ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("robot_0/move_base_simple/goal", 10);
 
-  nn = ros::this_node::getName();
-  nh.param(nn + "/num_people", NP, 1);
-  nh.param(nn + "/case_01_people", NP_01, 1);
-  nh.param(nn + "/case_02_people", NP_02, 0);
-  nh.param(nn + "/case_03_people", NP_03, 0);
-  nh.param(nn + "/case_04_people", NP_04, 0);
-  nh.param(nn + "/case_05_people", NP_05, 0);
-  nh.param(nn + "/case_06_people", NP_06, 0);
+  init.header.frame_id = "map";
+  temp.header.frame_id = "map";
 
   tf::TransformListener listener;
   tf::StampedTransform transform;
+
+  nn = ros::this_node::getName();
+  nh.param(nn + "/num_people", NP, 1);
+  nh.param(nn + "/num_cases", NC, 1);
+  for(int i=0; i<NC; i++){
+    int CP_temp;
+    std::string c_id = std::to_string(i);
+
+    nh.param(nn + "/case_" + c_id + "_people", CP_temp, 0); // activate parameters for given case number
+    CP.push_back(CP_temp);
+
+    nh.param(nn + "/goal_" + c_id + "_x", temp.pose.position.x, 0.0); // activate parameters for case goal
+    nh.param(nn + "/goal_" + c_id + "_y", temp.pose.position.y, 0.0);
+    temp.pose.orientation.z = 4.71;
+    temp.pose.orientation.w = 1.0;
+    goal.push_back(temp); // add case goal to stored goals
+  }
+  nh.param(nn + "/init_x", init.pose.pose.position.x, 0.0); // get parameters for robot initial pose
+  nh.param(nn + "/init_y", init.pose.pose.position.y, 0.0);
+  nh.param(nn + "/init_z", init.pose.pose.orientation.z, 0.0);
+  nh.param(nn + "/init_w", init.pose.pose.orientation.w, 0.0);
 
   ros::ServiceClient stage_client = nh.serviceClient<std_srvs::Empty>("reset_positions"); // for resetting the stage simulation
   ros::ServiceClient obstacle_client[NP];
@@ -47,65 +60,6 @@ int main(int argc, char **argv)
 //    ROS_INFO("p_id: %s", ("/robot_"+p_id+"/start_obstacle").c_str());
   }
   std_srvs::Empty srv;
-
-  ros::Rate r(10);
-
-  init.header.frame_id = "map";
-  temp.header.frame_id = "map";
-
-  init.pose.pose.position.x = 27.0;
-  init.pose.pose.position.y = -11.0;
-  init.pose.pose.orientation.z = 3.14;
-  init.pose.pose.orientation.w = 0.0;
-
-  temp.pose.position.x = -2.0; // goal 1
-  temp.pose.position.y = -11.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
-
-  temp.pose.position.x = -27.0; // goal 2
-  temp.pose.position.y = -8.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
-
-  temp.pose.position.x = -24.0; // goal 3
-  temp.pose.position.y = 10.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
-
-  temp.pose.position.x = -5.0; // goal 4
-  temp.pose.position.y = 9.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
-
-  temp.pose.position.x = -5.0; // goal 5
-  temp.pose.position.y = -7.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
-
-  temp.pose.position.x = 27.0; // goal 6
-  temp.pose.position.y = -11.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
-
-  temp.pose.position.x = 27.0; // goal 7
-  temp.pose.position.y = 11.0;
-  temp.pose.orientation.z = 4.71;
-  temp.pose.orientation.w = 1.0;
-
-  goal.push_back(temp);
 
   for(int i=0; i<1000; i++){
     for(int j=0; j<1000000; j++){
@@ -118,8 +72,7 @@ int main(int argc, char **argv)
   }
   goal_pub.publish(goal[0]);
 
-
-  for(int i=0; i<NP_01; i++){
+  for(int i=0; i<CP[0]; i++){ // start first obstacle set
     obstacle_client[i].call(srv);
   }
 
@@ -134,73 +87,33 @@ int main(int argc, char **argv)
                     (transform.getOrigin().y() - goal[k].pose.position.y));
     if(distance < 4.0){
       k++;
-      switch(k){
-        case 1:
-          goal_pub.publish(goal[k]);
-          for(int i=NP_01; i<NP_01+NP_02; i++){
-            obstacle_client[i].call(srv);
-          }
-          for(int i=0; i<NP_01; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
-
-        case 2:
-          goal_pub.publish(goal[k]);
-          for(int i=NP_01+NP_02; i<NP_01+NP_02+NP_03; i++){
-            obstacle_client[i].call(srv);
-          }
-          for(int i=NP_01; i<NP_01+NP_02; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
-
-        case 3:
-          goal_pub.publish(goal[k]);
-          for(int i=NP_01+NP_02+NP_03; i<NP_01+NP_02+NP_03+NP_04; i++){
-            obstacle_client[i].call(srv);
-          }
-          for(int i=NP_01+NP_02; i<NP_01+NP_02+NP_03; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
-
-        case 4:
-          goal_pub.publish(goal[k]);
-          for(int i=NP_01+NP_02+NP_03+NP_04; i<NP_01+NP_02+NP_03+NP_04+NP_05; i++){
-            obstacle_client[i].call(srv);
-          }
-          for(int i=NP_01+NP_02+NP_03; i<NP_01+NP_02+NP_03+NP_04; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
-
-        case 5:
-          goal_pub.publish(goal[k]);
-          for(int i=NP_01+NP_02+NP_03+NP_04; i<NP_01+NP_02+NP_03+NP_04+NP_05; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
-
-        case 6:
-          goal_pub.publish(goal[k]);
-          for(int i=NP_01+NP_02+NP_03+NP_04+NP_05; i<NP_01+NP_02+NP_03+NP_04+NP_05+NP_06; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
-
-        case 7:
-          k = 0;
-          for(int i=NP_01+NP_02+NP_03+NP_04+NP_05; i<NP_01+NP_02+NP_03+NP_04+NP_05+NP_06; i++){
-            obstacle_client[i].call(srv);
-          }
-          stage_client.call(srv); // reset robot positions
-          init_pub.publish(init);
-          goal_pub.publish(goal[k]);
-          for(int i=0; i<NP_01; i++){
-            obstacle_client[i].call(srv);
-          }
-          break;
+      int CP_t = 0;
+      if(k<NC){
+        goal_pub.publish(goal[k]); // publish k-case goal
+        for(int i=0; i<k; i++){
+          CP_t += CP[i];
+        }
+        for(int i=CP_t-CP[k]-CP[k-1]; i<CP_t-CP[k]; i++){ // stop previous obstacles
+          obstacle_client[i].call(srv);
+        }
+        for(int i=CP_t-CP[k]; i<CP_t; i++){ // start new obstacles
+          obstacle_client[i].call(srv);
+        }
+      }
+      else{
+        k=0;
+        for(int i=0; i<NC; i++){
+          CP_t += CP[i];
+        }
+        for(int i=CP_t-CP[NC-1]; i<CP_t; i++){ // note NC is not zero-indexed, stop last obstacle
+          obstacle_client[i].call(srv);
+        }
+        stage_client.call(srv); // reset robot positions
+        init_pub.publish(init); // re-initialize robot pose
+        goal_pub.publish(goal[k]); // publish k-case goal
+        for(int i=0; i<CP[k]; i++){ // start first obstacle set
+          obstacle_client[i].call(srv);
+        }
       }
     }
 
