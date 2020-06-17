@@ -166,6 +166,8 @@ namespace rrtdmp_planner{
       bool safety_;
       int safety_loops_;
       std::vector<bool> carlike_;
+      double min_d_;
+      std::vector<double> e_distance_;
 
       // define Dynamic Motion Primitive private member functions
       void socialForceModel(vertex_t Goal);
@@ -175,7 +177,7 @@ namespace rrtdmp_planner{
       static void peopleCallback(const geometry_msgs::PoseArray& data);
 
       // define Parameter Selection private member function and parameters
-      void selectParameters(double v_h);
+      void selectParameters(double v_h); //currently unused
       int k_;
   };
 };

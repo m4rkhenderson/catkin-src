@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   base_local_planner
   interactive_markers
   visualization_msgs
+  pedsim_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -224,6 +225,14 @@ target_link_libraries(SFM ${catkin_LIBRARIES})
 
 add_executable(map_remap src/REMAP/map_remap.cpp)
 target_link_libraries(map_remap ${catkin_LIBRARIES})
+
+add_executable(pedsim_remap src/REMAP/pedsim_remap.cpp)
+target_link_libraries(pedsim_remap ${catkin_LIBRARIES})
+add_dependencies(pedsim_remap planners_generate_messages_cpp)
+
+add_executable(velocity_remap src/REMAP/velocity_remap.cpp)
+target_link_libraries(velocity_remap ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planners.cpp

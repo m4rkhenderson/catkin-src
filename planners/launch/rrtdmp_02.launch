@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="node_start_delay" default="3.0"/>
+  <arg name="node_start_delay_2" default="5.0"/>
+  <arg name="node_start_delay_3" default="7.0"/>
+  <arg name="kbd_teleop" default="false"/>
+  <arg name="rqt_teleop" default="true"/>
+  <arg name="visualize" default="true"/>
+  <arg name="with_robot" default="true"/>
+
+  <arg name="simulation_factor" default="0.5"/> <!-- Speed up -->
+  <arg name="update_rate" default="10.0"/> <!-- Hz -->
+
+  <!-- Simulator -->
+  <include file="$(find pedsim_simulator)/launch/simulator.launch">
+    <arg name="kbd_teleop" value="$(arg kbd_teleop)"/>
+    <arg name="rqt_teleop" value="$(arg rqt_teleop)"/>
+    <arg name="scene_file" value="$(find planners)/launch/config/robot_noNS/scene_02.xml"/>
+    <arg name="with_robot" value="$(arg with_robot)"/>
+    <arg name="simulation_factor" value="$(arg simulation_factor)"/>
+    <arg name="update_rate" value="$(arg update_rate)"/>
+    <arg name="default_queue_size" value="10"/>
+    <arg name="max_robot_speed" value="100.0"/>
+    <arg name="robot_mode" value="0"/>
+    <arg name="enable_groups" value="true"/>
+    <arg name="pose_initial_x" value="-16.75"/>
+    <arg name="pose_initial_y" value="12.5"/>
+    <arg name="pose_initial_theta" value="0.0"/>
+  </include>
+
+  <!-- Visualizer -->
+  <include file="$(find pedsim_visualizer)/launch/visualizer.launch"/>
+
+  <param name="use_sim_time" value="true"/>
+
+  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/pedsim_scene_02.world">
+    <remap from="cmd_vel" to="pedbot/control/cmd_vel"/><!--was /robot_0/cmd_vel to /robot_0/cmd_vel_0 when there were more than one simulated robots-->
+  </node>
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_6.yaml"/>
+
+  <node pkg="planners" name="velocity_remap" type="velocity_remap"/>
+  <node pkg="planners" type="pedsim_remap" name="pedsim_remap"/>
+  <node pkg="planners" type="remap_scan" name="remap_scan"/>
+  <node pkg="planners" type="clear_scan" name="clear_scan">
+    <param name="laser_frame_id" value="base_laser_link"/>
+    <param name="reduction_factor" value="0.1"/>
+  </node>
+  <node pkg="amcl" type="amcl" name="amcl">
+    <param name="use_map_topic" value="true"/>
+    <param name="base_frame_id" value="base_footprint"/>
+    <param name="odom_frame_id" value="odom"/>
+    <param name="tf_broadcast" value="true"/>
+    <param name="odom_model_type" value="diff-corrected"/>
+    <param name="odom_alpha1" value="0.05"/>
+    <param name="odom_alpha2" value="0.05"/>
+    <param name="odom_alpha3" value="0.05"/>
+    <param name="odom_alpha4" value="0.05"/>
+    <remap from="scan" to="base_scan"/>
+    <remap from="static_map" to="/static_map"/>
+    <remap from="map" to="/map"/>
+  </node>
+  <node pkg="move_base" type="move_base" name="move_base" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" output="screen">
+    <rosparam file="$(find planners)/launch/config/robot_noNS/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+    <rosparam file="$(find planners)/launch/config/robot_noNS/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+    <rosparam file="$(find planners)/launch/config/robot_noNS/local_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find planners)/launch/config/robot_noNS/global_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find planners)/launch/config/robot_noNS/local_planner_params.yaml" command="load"/>
+    <param name="base_local_planner" value="rrtdmp_planner/RRTDMPPlanner"/>
+    <param name="use_dijkstra" value="false"/>
+    <param name="planner_frequency" value="1"/>
+    <param name="recovery_behavior_enabled" value="false"/>
+    <remap from="/move_base/RRTDMPPlanner/cmd_vel" to="robot_0/cmd_vel"/>
+    <remap from="/move_base/RRTDMPPlanner/people" to="people"/>
+    <remap from="/move_base/global_costmap/social_layer/people" to="people"/>
+    <remap from="map" to="/map"/>
+  </node>
+  <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/abot.urdf"/>
+  <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 base_link abot/base_bottom 100"/>
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+    <param name="publish_frequency" type="double" value="10.0"/>
+    <param name="tf_prefix" value=""/>
+  </node>
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" launch-prefix="bash -c 'sleep $(arg node_start_delay_2); $0 $@'">
+    <param name="use_gui" value="false"/>
+  </node>
+  <node pkg="planners" type="social_individual_index" name="sii" output="screen"/>
+
+  <node pkg="planners" type="initialize" name="initialize" launch-prefix="bash -c 'sleep $(arg node_start_delay_3); $0 $@'" output="screen">
+    <param name="num_people" value="3"/>
+    <param name="num_cases" value="3"/>
+    <param name="case_1_people" value="1"/>
+    <param name="case_2_people" value="1"/>
+    <param name="case_3_people" value="1"/>
+    <param name="init_x" value="-16.75"/>
+    <param name="init_y" value="12.5"/>
+    <param name="init_z" value="0.0"/>
+    <param name="init_w" value="1.0"/>
+    <param name="goal_1_x" value="-6.0"/>
+    <param name="goal_1_y" value="12.0"/>
+    <param name="goal_2_x" value="-6.0"/>
+    <param name="goal_2_y" value="-11.0"/>
+    <param name="goal_3_x" value="11.75"/>
+    <param name="goal_3_y" value="-13.0"/>
+  </node>
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find planners)/launch/config/rviz/rrtdmp_pedsim_02.rviz" if="$(arg visualize)"/>
+  <node pkg="rqt_plot" type="rqt_plot" name="sii_plot" args="/sii"/>
+
+</launch>

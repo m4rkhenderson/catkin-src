@@ -1,6 +1,6 @@
 global_costmap:
   global_frame: map
-  robot_base_frame: robot_1/base_footprint
+  robot_base_frame: base_footprint
   update_frequency: 10.0
   publish_frequency: 5.0
   resolution: 0.075 #map generated from slam has resolution of 0.05
@@ -16,6 +16,10 @@ global_costmap:
       type: "costmap_2d::InflationLayer"
     - name: obstacle_layer
       type: "costmap_2d::ObstacleLayer"
+    - name: social_layer
+      type: "social_layer_namespace::SocialLayer"
+    - name: rule_layer
+      type: "rule_layer_namespace::RuleLayer"
 
   static_layer:
     unknown_cost_value: -1

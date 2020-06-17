@@ -11,7 +11,7 @@ geometry_msgs::PoseStamped temp;
 std::string nn;
 
 double distance;
-int k;
+int k = 0;
 int NP;
 std::vector<int> CP;
 int NC;
@@ -22,8 +22,8 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   ros::Rate r(10);
 
-  ros::Publisher init_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("robot_0/initialpose", 10);
-  ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("robot_0/move_base_simple/goal", 10);
+  ros::Publisher init_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose", 10);
+  ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 10);
 
   init.header.frame_id = "map";
   temp.header.frame_id = "map";
@@ -32,21 +32,27 @@ int main(int argc, char **argv)
   tf::StampedTransform transform;
 
   nn = ros::this_node::getName();
-  nh.param(nn + "/num_people", NP, 1);
+  nh.param(nn + "/num_people", NP, 1); // only used for player stage simulation
   nh.param(nn + "/num_cases", NC, 1);
-  for(int i=0; i<NC; i++){
-    int CP_temp;
-    std::string c_id = std::to_string(i);
 
-    nh.param(nn + "/case_" + c_id + "_people", CP_temp, 0); // activate parameters for given case number
-    CP.push_back(CP_temp);
+  if(NC > 0){
+    for(int i=1; i<=NC; i++){
+      int CP_temp;
+      std::string c_id = std::to_string(i);
 
-    nh.param(nn + "/goal_" + c_id + "_x", temp.pose.position.x, 0.0); // activate parameters for case goal
-    nh.param(nn + "/goal_" + c_id + "_y", temp.pose.position.y, 0.0);
-    temp.pose.orientation.z = 4.71;
-    temp.pose.orientation.w = 1.0;
-    goal.push_back(temp); // add case goal to stored goals
+      nh.param(nn + "/case_" + c_id + "_people", CP_temp, 0); // activate parameters for given case number
+  //    ROS_INFO("CP: %d", CP_temp);
+      CP.push_back(CP_temp);
+
+      nh.param(nn + "/goal_" + c_id + "_x", temp.pose.position.x, 0.0); // activate parameters for case goal
+      nh.param(nn + "/goal_" + c_id + "_y", temp.pose.position.y, 0.0);
+      temp.pose.orientation.z = 4.71;
+      temp.pose.orientation.w = 1.0;
+  //    ROS_INFO("Goal Pose: %f,%f", temp.pose.position.x, temp.pose.position.y);
+      goal.push_back(temp); // add case goal to stored goals
+    }
   }
+
   nh.param(nn + "/init_x", init.pose.pose.position.x, 0.0); // get parameters for robot initial pose
   nh.param(nn + "/init_y", init.pose.pose.position.y, 0.0);
   nh.param(nn + "/init_z", init.pose.pose.orientation.z, 0.0);
@@ -54,10 +60,13 @@ int main(int argc, char **argv)
 
   ros::ServiceClient stage_client = nh.serviceClient<std_srvs::Empty>("reset_positions"); // for resetting the stage simulation
   ros::ServiceClient obstacle_client[NP];
-  for(int i=1; i<=NP; i++){
-    std::string p_id = std::to_string(i);
-    obstacle_client[i-1] = nh.serviceClient<std_srvs::Empty>("robot_"+p_id+"/start_obstacle");
-//    ROS_INFO("p_id: %s", ("/robot_"+p_id+"/start_obstacle").c_str());
+
+  if(NP > 0){
+    for(int i=1; i<=NP; i++){
+      std::string p_id = std::to_string(i);
+      obstacle_client[i-1] = nh.serviceClient<std_srvs::Empty>("robot_"+p_id+"/start_obstacle");
+  //    ROS_INFO("p_id: %s", ("/robot_"+p_id+"/start_obstacle").c_str());
+    }
   }
   std_srvs::Empty srv;
 
@@ -72,47 +81,64 @@ int main(int argc, char **argv)
   }
   goal_pub.publish(goal[0]);
 
-  for(int i=0; i<CP[0]; i++){ // start first obstacle set
-    obstacle_client[i].call(srv);
+  if(CP[0] > 0){
+    for(int i=0; i<CP[0]; i++){ // start first obstacle set
+      obstacle_client[i].call(srv);
+    }
   }
 
   ROS_INFO("Sent...");
 
 
   while(nh.ok()){
-    listener.lookupTransform("/map", "robot_0/base_footprint", ros::Time(0), transform);
+    listener.lookupTransform("/map", "base_footprint", ros::Time(0), transform);
     distance = sqrt((transform.getOrigin().x() - goal[k].pose.position.x)*
                     (transform.getOrigin().x() - goal[k].pose.position.x)+
                     (transform.getOrigin().y() - goal[k].pose.position.y)*
                     (transform.getOrigin().y() - goal[k].pose.position.y));
+//    ROS_INFO("distance: %f", distance);
     if(distance < 4.0){
       k++;
       int CP_t = 0;
       if(k<NC){
         goal_pub.publish(goal[k]); // publish k-case goal
-        for(int i=0; i<k; i++){
-          CP_t += CP[i];
+        for(int i=0; i<=k; i++){
+          CP_t = CP_t+CP[i];
+  //          ROS_INFO("CP_t: %d", CP_t);
         }
-        for(int i=CP_t-CP[k]-CP[k-1]; i<CP_t-CP[k]; i++){ // stop previous obstacles
-          obstacle_client[i].call(srv);
+        if(CP[k-1] > 0){
+          for(int i=CP_t-CP[k]-CP[k-1]; i<CP_t-CP[k]; i++){ // stop previous obstacles
+            obstacle_client[i].call(srv);
+          }
         }
-        for(int i=CP_t-CP[k]; i<CP_t; i++){ // start new obstacles
-          obstacle_client[i].call(srv);
+        if(CP[k] > 0){
+          for(int i=CP_t-CP[k]; i<CP_t; i++){ // start new obstacles
+            obstacle_client[i].call(srv);
+          }
         }
       }
       else{
         k=0;
-        for(int i=0; i<NC; i++){
-          CP_t += CP[i];
+        if(NC > 0){
+          for(int i=0; i<NC; i++){
+            CP_t += CP[i];
+          }
         }
-        for(int i=CP_t-CP[NC-1]; i<CP_t; i++){ // note NC is not zero-indexed, stop last obstacle
-          obstacle_client[i].call(srv);
+        if(NC > 0){
+          if(CP[NC-1] > 0){
+            for(int i=CP_t-CP[NC-1]; i<CP_t; i++){ // note NC is not zero-indexed, stop last obstacle
+              obstacle_client[i].call(srv);
+            }
+          }
         }
+
         stage_client.call(srv); // reset robot positions
         init_pub.publish(init); // re-initialize robot pose
         goal_pub.publish(goal[k]); // publish k-case goal
-        for(int i=0; i<CP[k]; i++){ // start first obstacle set
-          obstacle_client[i].call(srv);
+        if(CP[k] > 0){
+          for(int i=0; i<CP[k]; i++){ // start first obstacle set
+            obstacle_client[i].call(srv);
+          }
         }
       }
     }

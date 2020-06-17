@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<scenario>
+  <!--Border Obstacles-->
+  <obstacle x1="-29.16666" y1="-14.583333" x2="29.16666" y2="-14.583333"/>
+  <obstacle x1="-29.16666" y1="14.583333" x2="29.16666" y2="14.583333"/>
+  <obstacle x1="-29.16666" y1="15.583333" x2="-29.16666" y2="-15.583333"/>
+  <obstacle x1="29.16666" y1="15.583333" x2="29.16666" y2="-15.583333"/>
+  <!--First Interior Obstacle-->
+  <obstacle x1="-23.3333" y1="11.083333" x2="-23.3333" y2="1.749999"/>
+  <obstacle x1="-23.3333" y1="11.083333" x2="-7.0000" y2="11.083333"/>
+  <obstacle x1="-7.0000" y1="11.083333" x2="-7.0000" y2="-7.583333"/>
+  <obstacle x1="-25.6666" y1="-7.583333" x2="-7.0000" y2="-7.583333"/>
+  <obstacle x1="-25.6666" y1="-7.583333" x2="-25.6666" y2="1.749999"/>
+  <obstacle x1="-25.6666" y1="1.749999" x2="-23.3333" y2="1.749999"/>
+  <!--Second Interior Obstacle-->
+  <obstacle x1="-3.50000" y1="11.083333" x2="-3.50000" y2="-7.583333"/>
+  <obstacle x1="-3.50000" y1="11.083333" x2="25.6666" y2="11.083333"/>
+  <obstacle x1="25.6666" y1="11.083333" x2="25.6666" y2="7.583333"/>
+  <obstacle x1="25.6666" y1="7.583333" x2="22.86666" y2="7.583333"/>
+  <obstacle x1="22.86666" y1="7.583333" x2="22.86666" y2="2.983333"/>
+  <obstacle x1="22.86666" y1="2.983333" x2="25.6666" y2="2.983333"/>
+  <obstacle x1="25.6666" y1="2.983333" x2="25.6666" y2="-6.416666"/>
+  <obstacle x1="25.6666" y1="-6.416666" x2="18.6666" y2="-6.416666"/>
+  <obstacle x1="18.6666" y1="-6.416666" x2="18.6666" y2="-7.583333"/>
+  <obstacle x1="18.6666" y1="-7.583333" x2="-3.50000" y2="-7.583333"/>
+
+  <!--Waypoints-->
+  <waypoint id="robot_start" x="-16.75" y="-11.0" r="5.0"/>
+  <waypoint id="N_01" x="-5.25" y="-11.0" r="5.0"/>
+  <waypoint id="N_02" x="-27.0" y="-11.0" r="5.0"/>
+  <waypoint id="N_03" x="-27.0" y="13.0" r="5.0"/>
+  <waypoint id="N_04" x="-5.25" y="13.0" r="5.0"/>
+
+  <!--queue id="" x="" y="" direction=""/-->
+
+  <!--Robot Description-->
+  <agent x="-16.75" y="-11.0" n="1" dx="0" dy="0" type="2">
+    <addwaypoint id="robot_start"/>
+    <addwaypoint id="N_02"/>
+    <!--waypoints go here if necessary-->
+  </agent>
+
+  <!--People Descriptions-->
+  <!--Group 01-->
+  <agent x="-27.0" y="0.0" n="10" dx="1" dy="1" type="0">
+    <addwaypoint id="N_02"/>
+    <addwaypoint id="N_01"/>
+    <addwaypoint id="N_04"/>
+    <addwaypoint id="N_03"/>
+  </agent>
+  <!--Group 02-->
+  <agent x="-16.0" y="13.0" n="10" dx="1" dy="1" type="0">
+    <addwaypoint id="N_03"/>
+    <addwaypoint id="N_02"/>
+    <addwaypoint id="N_01"/>
+    <addwaypoint id="N_04"/>
+  </agent>
+  <!--Group 03-->
+  <agent x="-5.25" y="0.0" n="10" dx="1" dy="1" type="0">
+    <addwaypoint id="N_04"/>
+    <addwaypoint id="N_03"/>
+    <addwaypoint id="N_02"/>
+    <addwaypoint id="N_01"/>
+  </agent>
+  <!--Group 04-->
+  <agent x="-16.0" y="-11.0" n="10" dx="1" dy="1" type="0">
+    <addwaypoint id="N_04"/>
+    <addwaypoint id="N_03"/>
+    <addwaypoint id="N_02"/>
+    <addwaypoint id="N_01"/>
+  </agent>
+
+</scenario>

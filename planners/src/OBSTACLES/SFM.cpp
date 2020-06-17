@@ -22,11 +22,11 @@ double a_vel_max;
 double goal_x;
 double goal_y;
 double Fg_mag;
-double Fp_mag;
+double Fr_mag;
 double Fo_mag;
 double Ft_mag;
 double Fg_dir;
-double Fp_dir;
+double Fr_dir;
 double Fo_dir;
 double Ft_dir;
 double Ft_y;
@@ -65,6 +65,10 @@ double v_m;
 double v_r;
 double v_o;
 
+double g_weight;
+double r_weight;
+double o_weight;
+
 bool startCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response){
   start = !start;
 //  ROS_INFO("movement toggled...");
@@ -93,6 +97,9 @@ int main(int argc, char **argv)
   nh.param(nn + "/goal_y", goal_y, 0.0);
   nh.param(nn + "/linear_velocity_max", l_vel_max, 1.0);
   nh.param(nn + "/angular_velocity_max", a_vel_max, 1.0);
+  nh.param(nn + "/goal_weight", g_weight, 1.6);
+  nh.param(nn + "/robot_weight", r_weight, 1.0);
+  nh.param(nn + "/obstacle_weight", o_weight, 0.4);
 
   tf::TransformListener listener;
   tf::StampedTransform transform_robot;
@@ -146,10 +153,10 @@ int main(int argc, char **argv)
       d_r_p = d_r_c;
 //      ROS_INFO("Velocity: %f", v_r);
 
-      Fp_mag = (-1/(1+exp(-1*v_r+2))+1)*(-1/(1+exp(-1*d_r_c+6))+1); // begins to increase in strength when 3 meters away and with negative velocity
-      Fp_dir = atan2(y_r,x_r);
-//      ROS_INFO("Magnitude: %f", Fp_mag);
-//      ROS_INFO("Direction: %f", Fp_dir);
+      Fr_mag = (-1/(1+exp(-1*v_r+2))+1)*(-1/(1+exp(-1*d_r_c+6))+1); // begins to increase in strength when 3 meters away and with negative velocity
+      Fr_dir = atan2(y_r,x_r);
+//      ROS_INFO("Magnitude: %f", Fr_mag);
+//      ROS_INFO("Direction: %f", Fr_dir);
 
       for(int i=0; i<laser.ranges.size(); i++){
         if(laser.ranges[i] >= laser.range_max || laser.ranges[i] <= laser.range_min){
@@ -166,12 +173,14 @@ int main(int argc, char **argv)
       if(obs_mag.size() > 0){
         for(int i=0; i<obs_mag.size(); i++){
           obs_mag_sum += obs_mag[i];
-        }
-        d_o_avg_c = obs_mag_sum/obs_mag.size();
-        for(int i=0; i<obs_dir.size(); i++){
           obs_dir_sum += obs_dir[i];
         }
-        ang_o_avg = obs_dir_sum/obs_dir.size();
+        for(int i=0; i<obs_mag.size(); i++){
+          d_o_avg_c += obs_mag[i]*obs_mag[i]/obs_mag_sum; // temporary weighted sum (may change)
+          ang_o_avg += obs_dir[i]/(obs_dir_sum*(obs_mag[i]+1)); // temporary weighted sum, emphasizes angles for closer obstacles (may change)
+        }
+        d_o_avg_c = d_o_avg_c/obs_mag.size();
+        ang_o_avg = ang_o_avg/obs_dir.size();
       }
       obs_mag.clear();
       obs_dir.clear();
@@ -187,15 +196,15 @@ int main(int argc, char **argv)
       v_o = (d_o_avg_c-d_o_avg_p)/delta_t;
       d_o_avg_p = d_o_avg_c;
 
-      Fo_mag = (-1/(1+exp(-1*v_o+2))+1)*(-1/(1+exp(-1*d_o_avg_c+10))+1);
+      Fo_mag = (-1/(1+exp(-1*v_o+2))+1)*(-1/(1+exp(-1*d_o_avg_c+10))+1); // current problems: nearby obstacles have too much pull on the person
       Fo_dir = ang_o_avg;
 //      ROS_INFO("Magnitude: %f", Fo_mag);
 //      ROS_INFO("Direction: %f", Fo_dir);
 
-//      Ft_mag = (Fg_mag+Fp_mag+Fo_mag)/3;
-//      Ft_dir = (Fg_dir-Fp_dir-Fo_dir)/3;
-      Ft_x = (-1.85*Fg_mag*cos(Fg_dir-th_m)-0.75*Fp_mag*cos(Fp_dir-th_m)-0.4*Fo_mag*cos(Fo_dir-th_m))/3;
-      Ft_y = (-1.85*Fg_mag*sin(Fg_dir-th_m)-0.75*Fp_mag*sin(Fp_dir-th_m)-0.4*Fo_mag*sin(Fo_dir-th_m))/3;
+//      Ft_mag = (Fg_mag+Fr_mag+Fo_mag)/3;
+//      Ft_dir = (Fg_dir-Fr_dir-Fo_dir)/3;
+      Ft_x = (-g_weight*Fg_mag*cos(Fg_dir-th_m)+r_weight*Fr_mag*cos(Fr_dir-th_m)+o_weight*Fo_mag*cos(Fo_dir))/3;
+      Ft_y = (-g_weight*Fg_mag*sin(Fg_dir-th_m)+r_weight*Fr_mag*sin(Fr_dir-th_m)+o_weight*Fo_mag*sin(Fo_dir))/3;
 //      ROS_INFO("Magnitude: %f", Ft_mag);
 //      ROS_INFO("Direction: %f", Ft_dir);
 //      ROS_INFO("X: %f", Ft_x);

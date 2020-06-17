@@ -7,32 +7,12 @@
 
   <param name="use_sim_time" value="true"/>
 
-  <!--node pkg="planners" type="map_remap" name="map_remap" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" output="screen"/-->
-
-  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/rrtdmp_7.world">
-    <!--remap from="tf" to="tf_old"/-->
+  <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find stage_simulation)/worlds/scene_01.world">
     <remap from="/robot_0/cmd_vel" to="/robot_0/cmd_vel_0"/>
   </node>
-  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_6.yaml">
-    <!--remap from="/map" to="map"/-->
-  </node>
-  <!--node pkg="tf" type="tf_remap" name="tf_remap">
-    <rosparam param="mappings">
-      [{old: /robot_0/odom, new: robot_0/odom},{old: /robot_0/base_footprint, new: robot_0/base_footprint},{old: /robot_0/base_link, new: robot_0/base_link},{old: /robot_0/base_laser_link, new: robot_0/base_laser_link}]
-    </rosparam>
-  </node-->
-
-  <!--node pkg="planners" type="people_remap" name="people_remap">
-    <remap from="people" to="/robot_0/people"/>
-  </node-->
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find stage_simulation)/worlds/maps/rrtdmp_6.yaml"/>
 
   <group ns="robot_0">
-    <!--param name="tf_prefix" value="robot_0"/-->
-    <!--node pkg="planners" type="waypoint_markers" name="waypoint_markers">
-      <param name="num_markers" value="7"/>
-      <param name="base_frame" value="/robot_0/base_footprint"/>
-      <param name="goal_tolerance" value="5.0"/>
-    </node-->
     <node pkg="planners" type="people_remap" name="people_remap">
       <param name="num_people" value="30"/>
     </node>
@@ -82,11 +62,17 @@
     <node pkg="planners" type="social_individual_index" name="sii" output="screen"/>
   </group>
 
+  <!--group1-->
   <group ns="robot_1">
     <node pkg="planners" type="SFM" name="SFM" output="screen">
       <remap from="/robot_1/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_1/base_link robot_1/human/base 100"/>
@@ -98,12 +84,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_2">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_2/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_2/base_link robot_2/human/base 100"/>
@@ -115,12 +105,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_3">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_3/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_3/base_link robot_3/human/base 100"/>
@@ -132,12 +126,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_4">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_4/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_4/base_link robot_4/human/base 100"/>
@@ -149,12 +147,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_5">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_5/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_5/base_link robot_5/human/base 100"/>
@@ -166,12 +168,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_6">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_6/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_6/base_link robot_6/human/base 100"/>
@@ -183,12 +189,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_7">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_7/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_7/base_link robot_7/human/base 100"/>
@@ -200,12 +210,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_8">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_8/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_8/base_link robot_8/human/base 100"/>
@@ -217,12 +231,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_9">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_9/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="27.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_9/base_link robot_9/human/base 100"/>
@@ -234,14 +252,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-  <!--end of case 1-->
-
-
   <group ns="robot_10">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_10/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="0.0"/>
+      <param name="goal_x" value="-17.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_10/base_link robot_10/human/base 100"/>
@@ -254,11 +274,17 @@
     </node>
   </group>
 
+  <!--group2-->
   <group ns="robot_11">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_11/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_11/base_link robot_11/human/base 100"/>
@@ -270,12 +296,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_12">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_12/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_12/base_link robot_12/human/base 100"/>
@@ -287,12 +317,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_13">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_13/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_13/base_link robot_13/human/base 100"/>
@@ -304,12 +338,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_14">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_14/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_14/base_link robot_14/human/base 100"/>
@@ -321,12 +359,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_15">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_15/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
       <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_15/base_link robot_15/human/base 100"/>
@@ -338,14 +380,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-  <!--end of case 2-->
-
-
   <group ns="robot_16">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_16/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_16/base_link robot_16/human/base 100"/>
@@ -357,12 +401,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_17">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_17/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_17/base_link robot_17/human/base 100"/>
@@ -374,12 +422,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_18">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_18/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_18/base_link robot_18/human/base 100"/>
@@ -391,12 +443,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_19">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_19/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="0.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_19/base_link robot_19/human/base 100"/>
@@ -408,14 +464,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-  <!--end of case 3-->
-
-
   <group ns="robot_20">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_20/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="12.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="-11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_20/base_link robot_20/human/base 100"/>
@@ -428,11 +486,17 @@
     </node>
   </group>
 
+  <!--group3-->
   <group ns="robot_21">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_21/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="12.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_21/base_link robot_21/human/base 100"/>
@@ -444,12 +508,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_22">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_22/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="12.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_22/base_link robot_22/human/base 100"/>
@@ -461,12 +529,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_23">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_23/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-27.0"/>
-      <param name="goal_y" value="12.0"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_23/base_link robot_23/human/base 100"/>
@@ -478,14 +550,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-  <!--end of case 4-->
-
-
   <group ns="robot_24">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_24/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-5.0"/>
-      <param name="goal_y" value="11.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_24/base_link robot_24/human/base 100"/>
@@ -497,12 +571,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_25">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_25/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="-5.0"/>
-      <param name="goal_y" value="11.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_25/base_link robot_25/human/base 100"/>
@@ -514,14 +592,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-  <!--end of case 5-->
-
-
   <group ns="robot_26">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_26/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="28.0"/>
-      <param name="goal_y" value="3.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_26/base_link robot_26/human/base 100"/>
@@ -533,12 +613,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_27">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_27/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="28.0"/>
-      <param name="goal_y" value="3.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_27/base_link robot_27/human/base 100"/>
@@ -550,12 +634,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_28">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_28/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="28.0"/>
-      <param name="goal_y" value="3.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_28/base_link robot_28/human/base 100"/>
@@ -567,12 +655,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_29">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_29/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="28.0"/>
-      <param name="goal_y" value="3.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_29/base_link robot_29/human/base 100"/>
@@ -584,12 +676,16 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-
   <group ns="robot_30">
     <node pkg="planners" type="SFM" name="SFM">
       <remap from="/robot_30/SFM/cmd_vel" to="cmd_vel"/>
-      <param name="goal_x" value="28.0"/>
-      <param name="goal_y" value="3.5"/>
+      <param name="goal_x" value="-26.0"/>
+      <param name="goal_y" value="11.0"/>
+      <param name="linear_velocity_max" value="1.0"/>
+      <param name="angular_velocity_max" value="1.0"/>
+      <param name="goal_weight" value="1.3"/>
+      <param name="robot_weight" value="1.0"/>
+      <param name="obstacle_weight" value="0.7"/>
     </node>
     <param name="robot_description" command="$(find xacro)/xacro $(find planners)/urdf/human.urdf"/>
     <node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 1.0 0 0 0 robot_30/base_link robot_30/human/base 100"/>
@@ -601,26 +697,29 @@
       <param name="use_gui" value="false"/>
     </node>
   </group>
-  <!--end of case 6-->
 
 
   <node pkg="planners" type="initialize" name="initialize" launch-prefix="bash -c 'sleep $(arg node_start_delay_3); $0 $@'" output="screen">
     <param name="num_people" value="30"/>
-    <param name="case_01_people" value="9"/>
-    <param name="case_02_people" value="6"/>
-    <param name="case_03_people" value="4"/>
-    <param name="case_04_people" value="4"/>
-    <param name="case_05_people" value="2"/>
-    <param name="case_06_people" value="5"/>
+    <param name="num_cases" value="3"/>
+    <param name="case_1_people" value="10"/>
+    <param name="case_2_people" value="10"/>
+    <param name="case_3_people" value="10"/>
+    <param name="init_x" value="-16.75"/>
+    <param name="init_y" value="-11.0"/>
+    <param name="init_z" value="3.14"/>
+    <param name="init_w" value="0.0"/>
+    <param name="goal_1_x" value="-27.0"/>
+    <param name="goal_1_y" value="-11.0"/>
+    <param name="goal_2_x" value="-26.0"/>
+    <param name="goal_2_y" value="11.0"/>
+    <param name="goal_3_x" value="-16.75"/>
+    <param name="goal_3_y" value="11.0"/>
   </node>
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find planners)/launch/config/rviz/rrtdmp_2.rviz">
     <remap from="initialpose" to="robot_0/initialpose"/>
     <remap from="move_base_simple/goal" to="robot_0/move_base_simple/goal"/>
   </node>
-
-  <!--node pkg="rosbag" type="record" name="rrtdmp_record_trajectory"
-    args="robot_0/move_base/RRTDMPPlanner/trajectory robot_0/
-          robot_0/move_base/RRTDMPPlanner/people"/-->
 
 </launch>

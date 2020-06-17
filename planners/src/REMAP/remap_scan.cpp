@@ -8,7 +8,12 @@ std::string ns;
 
 void scanCallback(const sensor_msgs::LaserScan& data){
   scan = data;
-  scan.header.frame_id = ns + "/base_laser_link";
+  if(ns != ""){
+    scan.header.frame_id = ns + "/base_laser_link";
+  }
+  else{
+    scan.header.frame_id = "base_laser_link";
+  }
 }
 
 int main(int argc, char** argv){

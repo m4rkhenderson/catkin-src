@@ -83,6 +83,7 @@ ros::WallTime
       private_nh.param("person_max", person_max_, {1.0,1.0,1.0});
       private_nh.param("failure_max", failure_max_, {10,10,10});
       private_nh.param("carlike", carlike_, {false,false,false});
+      private_nh.param("e_distance", e_distance_, {1.0, 1.0, 1.0});
 
       //k_ manages which parameter set is currently used//
       k_ = 0;
@@ -135,7 +136,7 @@ ros::WallTime
       f_person_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("person_force", 10);
       f_total_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("total_force", 10);
       trajectory_pub_ = private_nh.advertise<nav_msgs::Path>("trajectory", 10); // for visualization (CCECE 2020)
-      trajectory_.header.frame_id = "map";
+      trajectory_.header.frame_id = "/map";
       time_cost_pub_ = private_nh.advertise<std_msgs::Float64>("time_cost", 10);
       comparison_plan_pub_ = private_nh.advertise<nav_msgs::Path>("comparison_plan", 1);
 
@@ -154,8 +155,17 @@ ros::WallTime
       previous_time_ = ros::WallTime::now();
       current_time_ = ros::WallTime::now();
 
-      // allocate storage space for previous people positions
-      people_p_ = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // max 30 people
+//      // allocate storage space for previous people positions
+//      people_p_ = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // max 100 people
 
       use_backup_ = false; // initialize backup parameter usage to false
       safety_ = true;
@@ -225,16 +235,16 @@ ros::WallTime
     dX = 1; // set in case ifs fail
     dY = 1;
     if(goal_pose_.pose.position.x/l_cm_resolution_ >= l_cm_width_+l_cm_pose_x_-1 || goal_pose_.pose.position.x/l_cm_resolution_ <= l_cm_pose_x_+1){
-      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_[k_]/2+robot_radius_[k_]);  // make the tolerance circle into something like an ellipsoid
-      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_[k_]+robot_radius_[k_]);
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(goal_tolerance_[k_]/2+robot_radius_[k_]);  // make the tolerance circle into something like an ellipsoid
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(goal_tolerance_[k_]+robot_radius_[k_]);
     }
     else if(goal_pose_.pose.position.y/l_cm_resolution_ >= l_cm_height_+l_cm_pose_y_-1 || goal_pose_.pose.position.y/l_cm_resolution_ <= l_cm_pose_y_+1){
-      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_[k_]+robot_radius_[k_]);
-      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_[k_]/2+robot_radius_[k_]);
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(goal_tolerance_[k_]+robot_radius_[k_]);
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(goal_tolerance_[k_]/2+robot_radius_[k_]);
     }
     else{
-      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(path_tolerance_[k_]/2+robot_radius_[k_]);
-      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(path_tolerance_[k_]/2+robot_radius_[k_]);
+      dX = fabs(current_pose_.pose.position.x/l_cm_resolution_ - goal_pose_.pose.position.x/l_cm_resolution_) -1*fabs(goal_tolerance_[k_]/2+robot_radius_[k_]);
+      dY = fabs(current_pose_.pose.position.y/l_cm_resolution_ - goal_pose_.pose.position.y/l_cm_resolution_) -1*fabs(goal_tolerance_[k_]/2+robot_radius_[k_]);
     }
 
     if(dX <= 0 && dY <= 0){
@@ -771,13 +781,10 @@ ros::WallTime
 /********************************************************************************************************************/
   void RRTDMPPlanner::velocityManager(){
     ros::WallTime initial_time;
-//    if(path_and_cmd_.cmd.size() > 0){
-//      cmd_vel_pub_.publish(path_and_cmd_.cmd[0]);
-//      cmd_prev_ = path_and_cmd_.cmd[0];
-//      //ROS_INFO("Velocity: %f", path_and_cmd_.cmd[0].linear.x);
-//      path_and_cmd_.cmd.erase(path_and_cmd_.cmd.begin());
-//    }
-    if(path_and_cmd_.cmd.size() <= 0){
+
+    if(path_and_cmd_.cmd.size() <= 0 || min_d_ < e_distance_[k_]/l_cm_resolution_){ // stop the robot if either no plan is found or the robot is too close to a person
+//      ROS_INFO("STOP: %f", min_d_);
+      path_and_cmd_.cmd.clear();
       geometry_msgs::Twist stop;
       for(int i=0; i<stop_loops_[k_]; i++){ // produce a set of motion commands to create a smooth stop for the robot
         stop.linear.x = cmd_prev_.linear.x - cmd_prev_.linear.x/(stop_loops_[k_]-i);
@@ -1144,6 +1151,8 @@ ros::WallTime
 //    }
 
 
+    min_d_ = 100000000.0; // e-stop check param reset
+
     if(people_.poses.size() > 0){
       for(int i=0; i<people_.poses.size(); i++){
         per_x = people_.poses[i].position.x/l_cm_resolution_;
@@ -1162,6 +1171,16 @@ ros::WallTime
         m.getRPY(roll, pitch, yaw);
 
         per_m = sqrt(per_x*per_x + per_y*per_y);
+        if(per_m < min_d_){ // set e-stop check param to closest person distance
+          min_d_ = per_m;
+        }
+
+        if(people_p_.size() < people_.poses.size()){ // if more space is needed for people_p_ then allocate some
+          for(int i=0; i<(people_.poses.size()-people_p_.size()); i++){
+            people_p_.push_back(0.0);
+          }
+        }
+
         per_v = (per_m - people_p_[i])/person_time_;
 
         per_v_h = fabs(per_v)*cos(yaw); // used for determining if tilt bias should be applied or ignored // note: this is not the x component of vel as per_v is only the component of vel directed towards the robot
@@ -1252,6 +1271,7 @@ ros::WallTime
     person_time_c_ = ros::WallTime::now();
     person_time_ = person_time_c_.toSec() - person_time_p_.toSec();
     person_time_p_ = person_time_c_;
+//    ROS_INFO("Number of People: %d", int(people_.poses.size()));
   }
 
 
